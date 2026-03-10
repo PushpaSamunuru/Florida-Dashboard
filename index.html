@@ -3,308 +3,353 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Florida Referrals Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>Florida Medicare GUIDE Referrals Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
 <style>
-:root{--bg:#0f1117;--surface:#181b24;--surface2:#1f2330;--border:#2a2f3e;--accent:#4fffb0;--accent2:#4db8ff;--accent3:#ff7b5c;--accent4:#f9c846;--text:#e8eaf0;--muted:#6b7280;--cr:16px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-#topBar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
-.bar-brand{font-family:"DM Serif Display",serif;font-size:1rem;color:#fff;white-space:nowrap;margin-right:8px;}
-.bar-brand em{color:var(--accent);font-style:italic;}
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--surface3:#21262d;
+  --border:#30363d;--border2:#21262d;
+  --text:#e6edf3;--muted:#7d8590;--muted2:#484f58;
+  --green:#3fb950;--green2:#238636;--green-dim:rgba(63,185,80,0.15);
+  --blue:#58a6ff;--blue-dim:rgba(88,166,255,0.15);
+  --amber:#d29922;--amber-dim:rgba(210,153,34,0.15);
+  --red:#f85149;--red-dim:rgba(248,81,73,0.15);
+  --purple:#bc8cff;--purple-dim:rgba(188,140,255,0.15);
+  --teal:#39d353;--cyan:#79c0ff;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+/* TOP BAR */
+#topBar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100;}
+.bar-title{font-size:0.85rem;font-weight:600;color:var(--text);white-space:nowrap;}
 .bar-spacer{flex:1;}
-#authSection{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-.user-pill{display:none;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:6px 14px;font-size:0.78rem;color:var(--text);}
+.user-pill{display:none;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:0.75rem;}
 .user-pill.show{display:flex;}
-.uavatar{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#0f1117;font-size:0.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
-.btn-ms{background:var(--accent);border:none;border-radius:10px;padding:8px 20px;font-size:0.8rem;font-family:"DM Sans",sans-serif;font-weight:600;color:#0f1117;cursor:pointer;transition:opacity 0.15s;display:flex;align-items:center;gap:8px;}
-.btn-ms:hover{opacity:0.85;}
-.btn-ms:disabled{opacity:0.4;cursor:not-allowed;}
-.btn-ghost{background:transparent;border:1px solid var(--border);border-radius:100px;padding:5px 14px;font-size:0.74rem;font-family:"DM Sans",sans-serif;color:var(--muted);cursor:pointer;transition:all 0.15s;}
-.btn-ghost:hover{border-color:var(--accent3);color:var(--accent3);}
-.btn-refresh{background:rgba(79,255,176,0.08);border:1px solid rgba(79,255,176,0.25);border-radius:100px;padding:5px 14px;font-size:0.74rem;font-family:"DM Sans",sans-serif;color:var(--accent);cursor:pointer;transition:all 0.15s;display:none;align-items:center;gap:6px;}
+.uavatar{width:20px;height:20px;border-radius:50%;background:var(--green);color:#000;font-size:0.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.btn-ms{background:var(--green);border:none;border-radius:8px;padding:7px 16px;font-size:0.78rem;font-family:'Inter',sans-serif;font-weight:600;color:#000;cursor:pointer;display:flex;align-items:center;gap:7px;transition:opacity .15s;}
+.btn-ms:hover{opacity:.85;}
+.btn-ms:disabled{opacity:.4;cursor:not-allowed;}
+.btn-ghost{background:transparent;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:0.72rem;font-family:'Inter',sans-serif;color:var(--muted);cursor:pointer;transition:all .15s;}
+.btn-ghost:hover{border-color:var(--red);color:var(--red);}
+.btn-refresh{background:transparent;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:0.72rem;font-family:'Inter',sans-serif;color:var(--green);cursor:pointer;display:none;align-items:center;gap:5px;transition:all .15s;}
 .btn-refresh.show{display:flex;}
-.btn-refresh:hover{background:rgba(79,255,176,0.15);}
-.btn-refresh:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-refresh:hover{border-color:var(--green);}
+.btn-refresh:disabled{opacity:.4;cursor:not-allowed;}
 #lastRefresh{font-size:0.7rem;color:var(--muted);display:none;}
 #lastRefresh.show{display:block;}
-.status-badge{font-size:0.74rem;padding:5px 12px;border-radius:100px;display:none;}
+.status-badge{font-size:0.72rem;padding:4px 10px;border-radius:20px;display:none;}
 .status-badge.show{display:block;}
-.status-ok{background:rgba(79,255,176,0.1);color:var(--accent);}
-.status-err{background:rgba(255,123,92,0.1);color:var(--accent3);}
-#filePicker{display:none;padding:14px 28px;background:rgba(77,184,255,0.06);border-bottom:1px solid rgba(77,184,255,0.2);}
-#filePicker p{font-size:0.8rem;color:var(--accent2);margin-bottom:10px;}
-.file-list{display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;}
-.file-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;transition:all 0.15s;font-size:0.8rem;}
-.file-item:hover{border-color:var(--accent);color:var(--accent);}
-.file-item-path{font-size:0.7rem;color:var(--muted);margin-left:auto;}
-#signInState{padding:80px 28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:20px;}
-.signin-icon{font-size:3.5rem;opacity:0.22;}
-.signin-title{font-family:"DM Serif Display",serif;font-size:1.9rem;color:#fff;}
-.signin-sub{font-size:0.88rem;color:var(--muted);max-width:420px;line-height:1.65;}
-.btn-ms-big{background:var(--accent);border:none;border-radius:12px;padding:14px 32px;font-size:0.95rem;font-family:"DM Sans",sans-serif;font-weight:600;color:#0f1117;cursor:pointer;display:flex;align-items:center;gap:10px;transition:opacity 0.2s;}
-.btn-ms-big:hover{opacity:0.85;}
-.signin-note{font-size:0.72rem;color:var(--muted);max-width:380px;line-height:1.55;}
-#mainContent{padding:28px 28px 60px;display:none;}
+.status-ok{background:var(--green-dim);color:var(--green);border:1px solid rgba(63,185,80,.3);}
+.status-err{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,81,73,.3);}
+
+/* FILE PICKER */
+#filePicker{display:none;padding:12px 24px;background:rgba(88,166,255,.06);border-bottom:1px solid rgba(88,166,255,.2);}
+#filePicker p{font-size:0.78rem;color:var(--blue);margin-bottom:8px;}
+.file-list{display:flex;flex-direction:column;gap:5px;max-height:140px;overflow-y:auto;}
+.file-item{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 12px;cursor:pointer;font-size:0.78rem;transition:all .15s;}
+.file-item:hover{border-color:var(--green);color:var(--green);}
+.file-item-path{font-size:0.68rem;color:var(--muted);margin-left:auto;}
+
+/* SIGN-IN STATE */
+#signInState{padding:80px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px;}
+.signin-icon{font-size:3rem;opacity:.2;}
+.signin-title{font-size:1.6rem;font-weight:700;color:var(--text);}
+.signin-sub{font-size:0.85rem;color:var(--muted);max-width:400px;line-height:1.6;}
+.sp-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:0.82rem;font-family:'Inter',sans-serif;color:var(--text);width:100%;max-width:520px;outline:none;transition:border-color .15s;}
+.sp-input:focus{border-color:var(--blue);}
+.btn-ms-big{background:var(--green);border:none;border-radius:10px;padding:12px 28px;font-size:0.9rem;font-family:'Inter',sans-serif;font-weight:600;color:#000;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .2s;}
+.btn-ms-big:hover{opacity:.85;}
+.signin-note{font-size:0.7rem;color:var(--muted);max-width:360px;line-height:1.5;}
+
+/* MAIN */
+#mainContent{padding:24px;display:none;}
 #mainContent.visible{display:block;}
-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:36px;border-bottom:1px solid var(--border);padding-bottom:24px;}
-.header-left h1{font-family:"DM Serif Display",serif;font-size:2.2rem;font-weight:400;letter-spacing:-0.5px;line-height:1.1;color:#fff;}
-.header-left h1 em{color:var(--accent);font-style:italic;}
-.header-left p{color:var(--muted);font-size:0.85rem;margin-top:6px;font-weight:300;}
-.header-right{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap;}
-.stat-pill{background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:8px 18px;font-size:0.78rem;color:var(--muted);}
-.stat-pill span{color:var(--text);font-weight:600;margin-left:6px;}
-.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--cr);padding:22px 20px;position:relative;overflow:hidden;}
-.kpi-click{cursor:pointer;transition:border-color 0.2s,transform 0.15s,box-shadow 0.2s;}
-.kpi-click:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,255,176,0.1);}
-.kpi-hint{font-size:0.68rem;color:var(--muted);margin-top:8px;opacity:0.7;}
-.kpi-click:hover .kpi-hint{color:var(--accent);opacity:1;}
-.kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--cr) var(--cr) 0 0;}
-.kpi:nth-child(1)::before{background:var(--accent);}
-.kpi:nth-child(2)::before{background:var(--accent2);}
-.kpi:nth-child(3)::before{background:var(--accent4);}
-.kpi:nth-child(4)::before{background:var(--accent3);}
-.kpi:nth-child(5)::before{background:#c084fc;}
-.kpi-label{font-size:0.71rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:500;margin-bottom:10px;}
-.kpi-value{font-family:"DM Serif Display",serif;font-size:2.6rem;line-height:1;color:#fff;}
-.kpi-sub{font-size:0.76rem;color:var(--muted);margin-top:6px;}
-.kpi-badge{display:inline-block;font-size:0.7rem;padding:2px 8px;border-radius:100px;font-weight:600;margin-top:8px;}
-.bg{background:rgba(79,255,176,0.12);color:var(--accent);}
-.bb{background:rgba(77,184,255,0.12);color:var(--accent2);}
-.by{background:rgba(249,200,70,0.12);color:var(--accent4);}
-.bo{background:rgba(255,123,92,0.12);color:var(--accent3);}
-.bp{background:rgba(192,132,252,0.12);color:#c084fc;}
-.charts-row{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:24px;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--cr);padding:24px 24px 20px;}
-.card-title{font-family:"DM Serif Display",serif;font-size:1.05rem;color:#fff;margin-bottom:4px;}
-.card-sub{font-size:0.75rem;color:var(--muted);margin-bottom:20px;}
-.chart-wrap{position:relative;height:220px;}
-.note-bar{background:rgba(77,184,255,0.07);border:1px solid rgba(77,184,255,0.2);border-radius:10px;padding:10px 18px;font-size:0.76rem;color:var(--accent2);margin-bottom:24px;}
-.src-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--cr);overflow:hidden;}
-.src-head{padding:22px 24px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;}
-.frow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.flabel{font-size:0.75rem;color:var(--muted);font-weight:500;margin-right:4px;}
-.fbtn{background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:5px 14px;font-size:0.75rem;font-family:"DM Sans",sans-serif;color:var(--muted);cursor:pointer;transition:all 0.15s;}
-.fbtn:hover{border-color:var(--accent);color:var(--accent);}
-.fbtn.active{background:rgba(79,255,176,0.1);border-color:var(--accent);color:var(--accent);}
-.lgrow{display:flex;gap:18px;padding:12px 24px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
-.lgitem{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--muted);}
-.ldot{width:8px;height:8px;border-radius:50%;}
-.dg{background:var(--accent);}.dy{background:var(--accent4);}.db{background:var(--accent2);}
+
+/* HEADER */
+.dash-header{margin-bottom:20px;}
+.dash-header h1{font-size:1.75rem;font-weight:700;color:var(--text);line-height:1.2;}
+.dash-header h1 em{color:var(--green);font-style:italic;}
+.dash-meta-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:6px;}
+.dash-subtitle{font-size:0.8rem;color:var(--muted);}
+.meta-pills{display:flex;gap:8px;flex-wrap:wrap;}
+.meta-pill{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:0.72rem;color:var(--muted);}
+.meta-pill strong{color:var(--text);font-weight:600;margin-left:4px;}
+
+/* INFO BANNER */
+.info-banner{background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.25);border-radius:8px;padding:10px 16px;font-size:0.78rem;color:var(--blue);margin-bottom:20px;line-height:1.5;}
+.info-banner u{cursor:pointer;text-decoration-style:dotted;}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 16px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s;}
+.kpi:hover{border-color:var(--green);transform:translateY(-2px);}
+.kpi::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi:nth-child(1)::after{background:var(--green);}
+.kpi:nth-child(2)::after{background:var(--blue);}
+.kpi:nth-child(3)::after{background:var(--amber);}
+.kpi:nth-child(4)::after{background:var(--red);}
+.kpi:nth-child(5)::after{background:var(--purple);}
+.kpi:nth-child(6)::after{background:#39d353;}
+.kpi-label{font-size:0.67rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;margin-bottom:10px;}
+.kpi-value{font-size:2rem;font-weight:700;color:var(--text);line-height:1;margin-bottom:6px;}
+.kpi-sub{font-size:0.72rem;color:var(--muted);margin-bottom:8px;line-height:1.4;}
+.kpi-badge{display:inline-block;font-size:0.67rem;padding:2px 8px;border-radius:20px;font-weight:600;border:1px solid;}
+.kpi-badge.green{background:var(--green-dim);color:var(--green);border-color:rgba(63,185,80,.4);}
+.kpi-badge.blue{background:var(--blue-dim);color:var(--blue);border-color:rgba(88,166,255,.4);}
+.kpi-badge.amber{background:var(--amber-dim);color:var(--amber);border-color:rgba(210,153,34,.4);}
+.kpi-badge.red{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.4);}
+.kpi-badge.purple{background:var(--purple-dim);color:var(--purple);border-color:rgba(188,140,255,.4);}
+.kpi-badge.teal{background:rgba(57,211,83,.12);color:#39d353;border-color:rgba(57,211,83,.4);}
+.kpi-hint{font-size:0.65rem;color:var(--muted2);margin-top:6px;}
+.kpi:hover .kpi-hint{color:var(--green);}
+.kpi-top-name{font-size:1.1rem;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:4px;}
+.kpi-top-sub{font-size:0.7rem;color:var(--muted);margin-bottom:6px;}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:20px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;}
+.chart-title{font-size:0.95rem;font-weight:600;color:var(--text);margin-bottom:4px;}
+.chart-sub{font-size:0.72rem;color:var(--muted);margin-bottom:16px;}
+.chart-sub a{color:var(--green);cursor:pointer;text-decoration:none;}
+.chart-wrap{position:relative;height:230px;}
+
+/* SOURCE TABLE */
+.src-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.src-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;}
+.src-head-left .src-title{font-size:1rem;font-weight:600;color:var(--text);margin-bottom:3px;}
+.src-head-left .src-sub{font-size:0.72rem;color:var(--muted);}
+.month-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.month-lbl{font-size:0.72rem;color:var(--muted);margin-right:2px;}
+.mbtn{background:transparent;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:0.72rem;font-family:'Inter',sans-serif;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.mbtn:hover{border-color:var(--green);color:var(--green);}
+.mbtn.active{background:transparent;border-color:var(--green);color:var(--green);}
+.src-legend{display:flex;gap:16px;padding:10px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.lgitem{display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted);}
+.ldot{width:7px;height:7px;border-radius:50%;}
 table{width:100%;border-collapse:collapse;}
-thead tr{background:var(--surface2);}
-th{font-size:0.67rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:10px 14px;text-align:left;font-weight:600;white-space:nowrap;}
+.src-table thead tr{background:var(--surface2);}
+th{font-size:0.64rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:9px 14px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border);}
 th.r,td.r{text-align:right;}
-td{padding:10px 14px;font-size:0.81rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
-tbody tr:last-child td{border-bottom:none;}
-tbody tr:hover td{background:var(--surface2);}
-.sname{font-weight:500;}
-.barcell{min-width:110px;}
-.btrack{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:2px;}
-.bfill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
-.pv{font-weight:600;font-size:0.8rem;}
-.ph{color:var(--accent);}.pm{color:var(--accent2);}.pl{color:var(--accent3);}
-.rank{color:var(--muted);font-size:0.72rem;}
-.sv{color:var(--accent4);font-weight:600;}
-.sc-val{color:var(--accent2);font-weight:600;}
-.zero{color:var(--border);}
-.cn{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;transition:color 0.15s;}
-.cn:hover{color:var(--accent) !important;}
-.tscroll{max-height:500px;overflow-y:auto;}
+td{padding:9px 14px;font-size:0.8rem;border-bottom:1px solid var(--border2);color:var(--text);vertical-align:middle;}
+.src-table tbody tr:last-child td{border-bottom:none;}
+.src-table tbody tr:hover td{background:rgba(255,255,255,.02);}
+.src-table tbody tr.total-row td{background:var(--surface2);font-weight:600;border-top:1px solid var(--border);}
+.sortable{cursor:pointer;user-select:none;}
+.sortable:hover{color:var(--blue);}
+.sort-icon{opacity:.35;margin-left:2px;font-size:0.6rem;}
+.sortable.asc .sort-icon,.sortable.desc .sort-icon{opacity:1;color:var(--green);}
+.cn{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;}
+.cn.g{color:var(--green);}.cn.g:hover{opacity:.8;}
+.cn.a{color:var(--amber);}.cn.a:hover{opacity:.8;}
+.cn.b{color:var(--blue);}.cn.b:hover{opacity:.8;}
+.cn.w{color:var(--text);}.cn.w:hover{color:var(--green);}
+.zero{color:var(--muted2);}
+.vol-bar-wrap{min-width:100px;max-width:150px;}
+.vol-bar-bg{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;}
+.vol-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#238636,#3fb950);}
+.rate-val{font-weight:600;}
+.rate-h{color:var(--green);}
+.rate-m{color:var(--amber);}
+.rate-l{color:var(--red);}
+.tscroll{max-height:520px;overflow-y:auto;}
 .tscroll::-webkit-scrollbar{width:4px;}
 .tscroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px;}
 .overlay.open{display:flex;}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:960px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.7);}
-.mhead{padding:20px 24px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-shrink:0;}
-.mtitle{font-family:"DM Serif Display",serif;font-size:1.25rem;color:#fff;line-height:1.2;}
-.mmeta{font-size:0.74rem;color:var(--muted);margin-top:5px;}
-.mclose{background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:34px;height:34px;cursor:pointer;color:var(--muted);font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
-.mclose:hover{border-color:var(--accent3);color:var(--accent3);}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:1100px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.8);}
+.mhead{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-shrink:0;}
+.mtitle{font-size:1.05rem;font-weight:600;color:var(--text);}
+.mmeta{font-size:0.72rem;color:var(--muted);margin-top:3px;}
+.mclose{background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;cursor:pointer;color:var(--muted);font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.mclose:hover{border-color:var(--red);color:var(--red);}
 .mbody{overflow-y:auto;flex:1;}
 .mbody::-webkit-scrollbar{width:4px;}
 .mbody::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 .mtable{width:100%;border-collapse:collapse;}
 .mtable thead tr{background:var(--surface2);position:sticky;top:0;z-index:1;}
-.mtable th{font-size:0.64rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:10px 16px;text-align:left;font-weight:600;white-space:nowrap;}
-.mtable td{padding:10px 16px;font-size:0.8rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
-.mtable tbody tr:last-child td{border-bottom:none;}
-.mtable tbody tr:hover td{background:rgba(255,255,255,0.02);}
-.sbadge{display:inline-block;font-size:0.67rem;padding:3px 9px;border-radius:100px;font-weight:600;white-space:nowrap;}
-.sa{background:rgba(79,255,176,0.12);color:var(--accent);}
-.sd{background:rgba(255,123,92,0.12);color:var(--accent3);}
-.ss{background:rgba(249,200,70,0.14);color:var(--accent4);}
-.sc{background:rgba(77,184,255,0.12);color:var(--accent2);}
-.so{background:rgba(107,114,128,0.15);color:var(--muted);}
-.mempty{padding:48px;text-align:center;color:var(--muted);font-size:0.85rem;}
-.src-sortable{cursor:pointer;user-select:none;white-space:nowrap;transition:color 0.15s;}
-.src-sortable:hover{color:var(--accent2);}
-.src-sortable.asc .sort-icon,.src-sortable.desc .sort-icon{opacity:1;color:var(--accent);}
-.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
-.sortable:hover{color:var(--accent2);}
-.sort-icon{font-size:0.65rem;opacity:0.4;margin-left:3px;}
-.sortable.asc .sort-icon,.sortable.desc .sort-icon{opacity:1;color:var(--accent);}
-.col-filter{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:0.72rem;font-family:"DM Sans",sans-serif;color:var(--text);width:100%;outline:none;transition:border-color 0.15s;}
-.col-filter:focus{border-color:var(--accent2);}
+.mtable th{font-size:0.62rem;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:9px 12px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border);}
+.mtable td{padding:9px 12px;font-size:0.77rem;border-bottom:1px solid var(--border2);color:var(--text);vertical-align:top;}
+.mtable tbody tr:hover td{background:rgba(255,255,255,.02);}
+.sbadge{display:inline-block;font-size:0.64rem;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;border:1px solid;}
+.sa{background:var(--green-dim);color:var(--green);border-color:rgba(63,185,80,.4);}
+.sd{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.4);}
+.ss{background:var(--amber-dim);color:var(--amber);border-color:rgba(210,153,34,.4);}
+.sc{background:var(--blue-dim);color:var(--blue);border-color:rgba(88,166,255,.4);}
+.so{background:rgba(125,133,144,.1);color:var(--muted);border-color:rgba(125,133,144,.3);}
+.notes-cell{max-width:200px;font-size:0.72rem;color:var(--muted);white-space:pre-wrap;word-break:break-word;line-height:1.4;}
+.notes-cell.has-notes{color:var(--text);}
+.mempty{padding:40px;text-align:center;color:var(--muted);font-size:.82rem;}
+.mfilter-row td{padding:5px 6px;background:var(--surface2);}
+.col-filter{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:0.7rem;font-family:'Inter',sans-serif;color:var(--text);width:100%;outline:none;transition:border-color .15s;}
+.col-filter:focus{border-color:var(--blue);}
 select.col-filter{cursor:pointer;}
-#filterRow td{padding:6px 8px;background:var(--surface2);}
-.clear-filters-btn{background:rgba(255,123,92,0.1);border:1px solid rgba(255,123,92,0.3);border-radius:100px;padding:3px 12px;font-size:0.71rem;font-family:"DM Sans",sans-serif;color:var(--accent3);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
-.clear-filters-btn:hover{background:rgba(255,123,92,0.2);}
-.mfoot{padding:12px 24px;border-top:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center;background:var(--surface2);font-size:0.73rem;color:var(--muted);}
+.clear-btn{background:var(--red-dim);border:1px solid rgba(248,81,73,.3);border-radius:20px;padding:2px 10px;font-size:.68rem;font-family:'Inter',sans-serif;color:var(--red);cursor:pointer;}
+.mfoot{padding:10px 20px;border-top:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center;background:var(--surface2);font-size:.7rem;color:var(--muted);}
 .mfoot span{color:var(--text);font-weight:600;}
-#loadingOverlay{position:fixed;inset:0;background:rgba(15,17,23,0.88);backdrop-filter:blur(8px);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+
+/* LOADING */
+#loadingOverlay{position:fixed;inset:0;background:rgba(13,17,23,.9);backdrop-filter:blur(6px);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
 #loadingOverlay.show{display:flex;}
-.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;}
+.spinner{width:32px;height:32px;border:2.5px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-.loading-msg{font-size:0.85rem;color:var(--muted);}
+.loading-msg{font-size:.8rem;color:var(--muted);}
 </style>
 </head>
 <body>
 
 <!-- TOP BAR -->
 <div id="topBar">
-  <span class="bar-brand">Florida Referrals <em>Dashboard</em></span>
+  <span class="bar-title">Florida Medicare GUIDE · Referrals</span>
   <div class="bar-spacer"></div>
-  <div id="authSection">
-    <span class="status-badge" id="statusBadge"></span>
-    <span id="lastRefresh"></span>
-    <button class="btn-refresh" id="btnRefresh" onclick="refreshData()">↻ Refresh</button>
-    <div class="user-pill" id="userPill">
-      <div class="uavatar" id="userAvatar">?</div>
-      <span id="userName">—</span>
-    </div>
-    <button class="btn-ghost" id="btnSignOut" style="display:none" onclick="signOut()">Sign out</button>
-    <button class="btn-ms" id="btnSignIn" onclick="signIn()">
-      <svg width="18" height="18" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
-      Sign in with Microsoft
-    </button>
+  <span class="status-badge" id="statusBadge"></span>
+  <span id="lastRefresh"></span>
+  <button class="btn-refresh" id="btnRefresh" onclick="refreshData()">↻ Refresh</button>
+  <div class="user-pill" id="userPill">
+    <div class="uavatar" id="userAvatar">?</div>
+    <span id="userName">—</span>
   </div>
+  <button class="btn-ghost" id="btnSignOut" style="display:none" onclick="signOut()">Sign out</button>
+  <button class="btn-ms" id="btnSignIn" onclick="signIn()">
+    <svg width="16" height="16" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+    Sign in with Microsoft
+  </button>
 </div>
 
 <!-- FILE PICKER -->
 <div id="filePicker">
-  <p>📂 Multiple Excel files found — pick one to load:</p>
+  <p>📂 Multiple files found — pick one:</p>
   <div class="file-list" id="fileList"></div>
 </div>
 
 <!-- SIGN-IN STATE -->
 <div id="signInState">
   <div class="signin-icon">🔐</div>
-  <div class="signin-title">Sign in to load live data</div>
-  <div class="signin-sub">Connect your MedBetterHealth.org account, then paste the SharePoint link to your Excel file.</div>
-  <div style="display:flex;gap:8px;width:100%;max-width:560px;">
-    <input id="spUrlInput" type="text" placeholder="Paste SharePoint share link to Guide Master List.xlsx…"
-      style="flex:1;background:#1f2330;border:1px solid #2a2f3e;border-radius:10px;padding:10px 14px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:#e8eaf0;outline:none;"
-      oninput="saveUrl(this.value)">
-  </div>
+  <div class="signin-title">Florida Medicare GUIDE Dashboard</div>
+  <div class="signin-sub">Sign in with your MedBetterHealth.org account, then paste the SharePoint link to load live data.</div>
+  <input class="sp-input" id="spUrlInput" type="text" placeholder="Paste SharePoint share link to Guide Master List.xlsx…" oninput="saveUrl(this.value)">
   <button class="btn-ms-big" onclick="signIn()">
-    <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+    <svg width="18" height="18" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
     Sign in with Microsoft
   </button>
-  <div class="signin-note">Paste the SharePoint share link first, then sign in. The URL is saved automatically for future visits.</div>
+  <div class="signin-note">The SharePoint link is saved automatically. After first sign-in, data loads silently on every visit.</div>
 </div>
 
 <!-- MAIN DASHBOARD -->
 <div id="mainContent">
-<header>
-  <div class="header-left">
+  <div class="dash-header">
     <h1>Florida Referrals <em>Dashboard</em></h1>
-    <p id="headerSub">Loading…</p>
-  </div>
-  <div class="header-right">
-    <div class="stat-pill">Total Records<span id="pillTotal">—</span></div>
-    <div class="stat-pill">Date Range<span id="pillRange">—</span></div>
-    <div class="stat-pill">Denial Rate<span id="pillDenial">—</span></div>
-  </div>
-</header>
-<div class="kpi-row">
-  <div class="kpi kpi-click" onclick="openModal('all')">
-    <div class="kpi-label">Total Referrals</div>
-    <div class="kpi-value" id="kpiTotal">—</div>
-    <div class="kpi-sub">All patients on record</div>
-    <span class="kpi-badge bg">All Time</span>
-    <div class="kpi-hint">↗ Click to view all patients</div>
-  </div>
-  <div class="kpi kpi-click" onclick="openModal('approved')">
-    <div class="kpi-label">Total Approved</div>
-    <div class="kpi-value" id="kpiApproved">—</div>
-    <div class="kpi-sub">Approval letter sent</div>
-    <span class="kpi-badge bb" id="kpiApprRate">—</span>
-    <div class="kpi-hint">↗ Click to view approved patients</div>
-  </div>
-  <div class="kpi kpi-click" onclick="openModal('submitted')">
-    <div class="kpi-label">Submitted to Medicare</div>
-    <div class="kpi-value" id="kpiSubmitted">—</div>
-    <div class="kpi-sub">Awaiting Medicare decision</div>
-    <span class="kpi-badge by">In Progress</span>
-    <div class="kpi-hint">↗ Click to view submitted patients</div>
-  </div>
-  <div class="kpi kpi-click" onclick="openModal('scheduled')">
-    <div class="kpi-label">Scheduled</div>
-    <div class="kpi-value" id="kpiScheduled">—</div>
-    <div class="kpi-sub">Appointments confirmed</div>
-    <span class="kpi-badge bo">Active</span>
-    <div class="kpi-hint">↗ Click to view scheduled patients</div>
-  </div>
-  <div class="kpi kpi-click" onclick="openModal('denied')">
-    <div class="kpi-label">Denied</div>
-    <div class="kpi-value" id="kpiDenied">—</div>
-    <div class="kpi-sub">Non-approval letters sent</div>
-    <span class="kpi-badge bp" id="kpiDenialRate">—</span>
-    <div class="kpi-hint">↗ Click to view denied patients</div>
-  </div>
-</div>
-<div class="note-bar">ℹ️ <strong>Approved</strong> = Status "Approved" <em>and</em> Approval Letter column is filled. &nbsp;|&nbsp; <strong>Submitted to Medicare</strong> = Status "Submitted To Medicare". &nbsp;|&nbsp; Records without a referral date appear in tables but not monthly charts.</div>
-<div class="charts-row">
-  <div class="card">
-    <div class="card-title">Monthly Referrals vs Approvals</div>
-    <div class="card-sub" id="chartBarSub">Referrals with a date only</div>
-    <div class="chart-wrap"><canvas id="barChart"></canvas></div>
-  </div>
-  <div class="card">
-    <div class="card-title">Monthly Approval Rate</div>
-    <div class="card-sub">% of dated referrals approved each month</div>
-    <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
-  </div>
-</div>
-<div class="src-card">
-  <div class="src-head">
-    <div>
-      <div class="card-title">Referring Sources</div>
-      <div class="card-sub" style="margin-bottom:0">All sources · Click any number to drill down</div>
-    </div>
-    <div class="frow">
-      <span class="flabel">Filter by month:</span>
-      <button class="fbtn active" onclick="filterMonth('all',this)">All Time</button>
-      <span id="monthBtns"></span>
+    <div class="dash-meta-row">
+      <div class="dash-subtitle" id="dashSubtitle">Medicare GUIDE Program · Loading…</div>
+      <div class="meta-pills">
+        <div class="meta-pill">Data Source<strong>Florida Referrals Tab</strong></div>
+        <div class="meta-pill">Last Updated<strong id="lastUpdatedPill">—</strong></div>
+      </div>
     </div>
   </div>
-  <div class="lgrow">
-    <div class="lgitem"><div class="ldot dg"></div>Approved</div>
-    <div class="lgitem"><div class="ldot dy"></div>Submitted</div>
-    <div class="lgitem"><div class="ldot db"></div>Scheduled</div>
+
+  <div class="info-banner">
+    ℹ️ <strong>Drill-down enabled:</strong> Click any <u onclick="void(0)">underlined number</u> in the source table to view the individual patients behind that figure. Filter by status inside the modal.
   </div>
-  <div class="tscroll">
-    <table id="srcTable">
-      <thead>
-        <tr>
-          <th class="src-sortable" onclick="sortSrc('rank')">#<span class="sort-icon">↕</span></th>
-          <th class="src-sortable" onclick="sortSrc('source')">Source <span class="sort-icon">↕</span></th>
-          <th class="r src-sortable" onclick="sortSrc('total')">Total <span class="sort-icon">↕</span></th>
-          <th class="r src-sortable" onclick="sortSrc('approved')">Approved <span class="sort-icon">↕</span></th>
-          <th class="r src-sortable" onclick="sortSrc('submitted')">Submitted <span class="sort-icon">↕</span></th>
-          <th class="r src-sortable" onclick="sortSrc('scheduled')">Scheduled <span class="sort-icon">↕</span></th>
-          <th class="src-sortable" onclick="sortSrc('rate')">Approval Rate <span class="sort-icon">↕</span></th>
-        </tr>
-      </thead>
-      <tbody id="srcBody"></tbody>
-    </table>
+
+  <div class="kpi-grid">
+    <div class="kpi" onclick="openModal('all')">
+      <div class="kpi-label">Total Referrals</div>
+      <div class="kpi-value" id="kpiTotal">—</div>
+      <div class="kpi-sub">All records on file</div>
+      <span class="kpi-badge green" id="kpiDateRange">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+    <div class="kpi" onclick="openModal('approved')">
+      <div class="kpi-label">Total Approved</div>
+      <div class="kpi-value" id="kpiApproved">—</div>
+      <div class="kpi-sub" id="kpiApprSub">Out of — referrals</div>
+      <span class="kpi-badge blue" id="kpiApprRate">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+    <div class="kpi" onclick="openModal('submitted')">
+      <div class="kpi-label">Submitted to Medicare</div>
+      <div class="kpi-value" id="kpiSubmitted">—</div>
+      <div class="kpi-sub">Pending Medicare decision</div>
+      <span class="kpi-badge amber" id="kpiSubmPct">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+    <div class="kpi" onclick="openModal('scheduled')">
+      <div class="kpi-label">Scheduled</div>
+      <div class="kpi-value" id="kpiScheduled">—</div>
+      <div class="kpi-sub">Awaiting appointment</div>
+      <span class="kpi-badge red" id="kpiSchedPct">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+    <div class="kpi" onclick="openBestMonthModal()">
+      <div class="kpi-label">Best Month</div>
+      <div class="kpi-value" id="kpiBestMonth">—</div>
+      <div class="kpi-sub" id="kpiBestSub">— referrals · — approved</div>
+      <span class="kpi-badge purple" id="kpiBestRate">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+    <div class="kpi" onclick="openTopSourceModal()">
+      <div class="kpi-label">Top Source</div>
+      <div class="kpi-top-name" id="kpiTopName">—</div>
+      <div class="kpi-top-sub" id="kpiTopSub">— referrals · — approved</div>
+      <span class="kpi-badge teal" id="kpiTopRate">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
   </div>
-</div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Monthly Referrals &amp; Approvals</div>
+      <div class="chart-sub">Total referrals vs. approved per month — <a onclick="void(0)">click any bar to drill in</a></div>
+      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Approval Rate by Month</div>
+      <div class="chart-sub">% of referrals approved — <a onclick="void(0)">click any point to drill in</a></div>
+      <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="src-card">
+    <div class="src-head">
+      <div class="src-head-left">
+        <div class="src-title">Referring Sources Performance</div>
+        <div class="src-sub">Click any underlined number to see individual patient records</div>
+      </div>
+      <div class="month-row">
+        <span class="month-lbl">Month:</span>
+        <button class="mbtn active" onclick="filterMonth('all',this)">All Time</button>
+        <span id="monthBtns"></span>
+      </div>
+    </div>
+    <div class="src-legend">
+      <div class="lgitem"><div class="ldot" style="background:var(--green)"></div>Approved = confirmed by Medicare</div>
+      <div class="lgitem"><div class="ldot" style="background:var(--amber)"></div>Submitted = sent to Medicare, awaiting decision</div>
+      <div class="lgitem"><div class="ldot" style="background:var(--blue)"></div>Approval Rate = Approved ÷ Total Referrals</div>
+    </div>
+    <div class="tscroll">
+      <table class="src-table">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th class="sortable" onclick="sortSrc('source')">Referring Source <span class="sort-icon">↕</span></th>
+            <th class="r sortable" onclick="sortSrc('total')">Referrals <span class="sort-icon">↑</span></th>
+            <th class="r sortable" onclick="sortSrc('approved')">Approved <span class="sort-icon">↕</span></th>
+            <th class="r sortable" onclick="sortSrc('submitted')">Submitted <span class="sort-icon">↕</span></th>
+            <th class="r sortable" onclick="sortSrc('scheduled')">Scheduled <span class="sort-icon">↕</span></th>
+            <th class="r sortable" onclick="sortSrc('rate')">Approval Rate <span class="sort-icon">↕</span></th>
+            <th>Volume</th>
+          </tr>
+        </thead>
+        <tbody id="srcBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -322,36 +367,51 @@ select.col-filter{cursor:pointer;}
         <thead>
           <tr>
             <th class="sortable" onclick="sortModal('n')">Name <span class="sort-icon">↕</span></th>
-            <th class="sortable" onclick="sortModal('d')">Referral Date <span class="sort-icon">↕</span></th>
-            <th class="sortable" onclick="sortModal('s')">Referred By <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('d')">Ref. Date <span class="sort-icon">↕</span></th>
             <th class="sortable" onclick="sortModal('st')">Status <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('s')">Referred By <span class="sort-icon">↕</span></th>
+            <th>Referred To</th>
             <th class="sortable" onclick="sortModal('t')">Tier <span class="sort-icon">↕</span></th>
             <th class="sortable" onclick="sortModal('c')">County <span class="sort-icon">↕</span></th>
-            <th>HCPCS</th><th>Home Assess.</th><th>Letter</th>
+            <th>HCPCS</th>
+            <th>Home Assess.</th>
+            <th>Appt Date</th>
+            <th>Follow Up</th>
+            <th>DOB</th>
+            <th>Gender</th>
+            <th>Zip</th>
+            <th>Medicare ID</th>
+            <th>Caregiver</th>
+            <th>Respite</th>
+            <th>Letter</th>
+            <th>Notes / Remarks</th>
           </tr>
-          <tr id="filterRow">
-            <td><input class="col-filter" id="cf-n" placeholder="Search name…" oninput="applyColFilters()"></td>
-            <td><input class="col-filter" id="cf-d" placeholder="Date…" oninput="applyColFilters()"></td>
-            <td><input class="col-filter" id="cf-s" placeholder="Source…" oninput="applyColFilters()"></td>
+          <tr class="mfilter-row" id="filterRow">
+            <td><input class="col-filter" id="cf-n" placeholder="Name…" oninput="applyFilters()"></td>
+            <td><input class="col-filter" id="cf-d" placeholder="Date…" oninput="applyFilters()"></td>
             <td>
-              <select class="col-filter" id="cf-st" onchange="applyColFilters()">
-                <option value="">All Statuses</option>
+              <select class="col-filter" id="cf-st" onchange="applyFilters()">
+                <option value="">All</option>
                 <option>Approved</option><option>Denied</option>
                 <option>Submitted To Medicare</option><option>Scheduled</option>
                 <option>No Dementia</option><option>Dementia Eligible</option>
                 <option>Medicare Eligible</option><option>CN Virtual Visit</option>
                 <option>Care Plan Complete</option><option>Education</option>
+                <option>Bill For 99483</option><option>Home Visit</option>
+                <option>Bill for Guide</option>
               </select>
             </td>
-            <td><input class="col-filter" id="cf-t" placeholder="Tier…" oninput="applyColFilters()"></td>
-            <td><input class="col-filter" id="cf-c" placeholder="County…" oninput="applyColFilters()"></td>
-            <td></td><td></td>
-            <td><button class="clear-filters-btn" onclick="clearFilters()">✕ Clear</button></td>
+            <td><input class="col-filter" id="cf-s" placeholder="Source…" oninput="applyFilters()"></td>
+            <td></td>
+            <td><input class="col-filter" id="cf-t" placeholder="Tier…" oninput="applyFilters()"></td>
+            <td><input class="col-filter" id="cf-c" placeholder="County…" oninput="applyFilters()"></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            <td><button class="clear-btn" onclick="clearFilters()">✕ Clear</button></td>
           </tr>
         </thead>
         <tbody id="modalBody"></tbody>
       </table>
-      <div id="modalEmpty" class="mempty" style="display:none">No patients match your filters.</div>
+      <div id="modalEmpty" class="mempty" style="display:none">No patients match the current filters.</div>
     </div>
     <div class="mfoot">
       <div>Showing <span id="modalCount">0</span> of <span id="modalTotal">0</span> patients</div>
@@ -373,283 +433,265 @@ const TENANT_ID  = 'c4057d88-bc8a-4772-903d-e21ab2c65e4c';
 const SCOPES     = ['Files.Read','Sites.Read.All'];
 const FILE_NAME  = 'Guide Master List.xlsx';
 const SHEET_NAME = 'Florida Referrals';
-const COL = {date:0,firstName:1,lastName:2,source:3,status:11,hcpcs:14,tier:26,homeAssess:27,county:29,letter:30};
+const COL = {
+  date:0, firstName:1, lastName:2, source:3, referredTo:4,
+  dob:5, medicareId:6, gender:7, caregiver:8, caregiverContact:9, caregiverEmail:10,
+  status:11, respite:12, notes:13, hcpcs:14, startDate:15, apptDate:16,
+  zip:25, tier:26, homeAssess:27, followUp:28, county:29, letter:30
+};
 
 // ── MSAL ──────────────────────────────────────────────────
-let msalApp = null;
-let currentAccount = null;
-let PATIENTS = [];
-let barChart = null, lineChart = null;
+let msalApp=null, currentAccount=null, bootReady=null;
+let PATIENTS=[], barChart=null, lineChart=null;
 let srcSortKey='total', srcSortDir=-1, currentMonth='all';
 let modalPatients=[], modalFiltered=[], modalSortKey='d', modalSortDir=-1;
-
-let bootReady = null;
+let _bestMonthKey='', _topSource='';
 
 async function boot() {
-  bootReady = (async () => {
-    msalApp = new msal.PublicClientApplication({
-      auth:{
-        clientId: CLIENT_ID,
-        authority: 'https://login.microsoftonline.com/' + TENANT_ID,
-        redirectUri: window.location.href.split("#")[0].split("?")[0]
-      },
+  bootReady=(async()=>{
+    msalApp=new msal.PublicClientApplication({
+      auth:{clientId:CLIENT_ID,authority:'https://login.microsoftonline.com/'+TENANT_ID,redirectUri:window.location.href.split('#')[0].split('?')[0]},
       cache:{cacheLocation:'localStorage',storeAuthStateInCookie:true}
     });
     await msalApp.initialize();
-    try { await msalApp.handleRedirectPromise(); } catch(e){}
-    const accounts = msalApp.getAllAccounts();
-    if (accounts.length > 0) { currentAccount = accounts[0]; onSignedIn(); }
+    try{await msalApp.handleRedirectPromise();}catch(e){}
+    const accounts=msalApp.getAllAccounts();
+    if(accounts.length>0){currentAccount=accounts[0];onSignedIn();}
   })();
   await bootReady;
-  // Pre-fill saved URL
-  const saved = getSavedUrl();
-  if (saved) {
-    const inp = document.getElementById('spUrlInput');
-    if (inp) inp.value = saved;
-  }
+  const saved=getSavedUrl();
+  if(saved){const inp=document.getElementById('spUrlInput');if(inp)inp.value=saved;}
 }
 
-async function signIn() {
-  try {
-    document.getElementById('btnSignIn').disabled = true;
-    if (bootReady) await bootReady;
-    const res = await msalApp.loginPopup({scopes:SCOPES, prompt:'select_account'});
-    currentAccount = res.account;
-    onSignedIn();
-  } catch(e) {
-    document.getElementById('btnSignIn').disabled = false;
-    if (!e.message.includes('user_cancelled')) setStatus('Sign-in failed: ' + e.message, 'err');
+async function signIn(){
+  try{
+    document.getElementById('btnSignIn').disabled=true;
+    if(bootReady)await bootReady;
+    const res=await msalApp.loginPopup({scopes:SCOPES,prompt:'select_account'});
+    currentAccount=res.account;onSignedIn();
+  }catch(e){
+    document.getElementById('btnSignIn').disabled=false;
+    if(!e.message.includes('user_cancelled'))setStatus('Sign-in failed: '+e.message,'err');
   }
 }
-
-function signOut() {
-  msalApp.logoutPopup({account:currentAccount});
-  currentAccount = null;
+function signOut(){
+  msalApp.logoutPopup({account:currentAccount});currentAccount=null;
   document.getElementById('userPill').classList.remove('show');
-  document.getElementById('btnSignOut').style.display = 'none';
+  document.getElementById('btnSignOut').style.display='none';
   document.getElementById('btnRefresh').classList.remove('show');
-  document.getElementById('btnSignIn').style.display = '';
-  document.getElementById('btnSignIn').disabled = false;
+  document.getElementById('btnSignIn').style.display='';
+  document.getElementById('btnSignIn').disabled=false;
   document.getElementById('mainContent').classList.remove('visible');
-  document.getElementById('signInState').style.display = '';
-  document.getElementById('filePicker').style.display = 'none';
+  document.getElementById('signInState').style.display='';
+  document.getElementById('filePicker').style.display='none';
   document.getElementById('lastRefresh').classList.remove('show');
   clearStatus();
 }
-
-async function onSignedIn() {
-  const name = currentAccount.name || currentAccount.username;
-  document.getElementById('userAvatar').textContent = name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
-  document.getElementById('userName').textContent = name;
+async function onSignedIn(){
+  const name=currentAccount.name||currentAccount.username;
+  document.getElementById('userAvatar').textContent=name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('userName').textContent=name;
   document.getElementById('userPill').classList.add('show');
-  document.getElementById('btnSignOut').style.display = '';
-  document.getElementById('btnSignIn').style.display = 'none';
-  document.getElementById('signInState').style.display = 'none';
+  document.getElementById('btnSignOut').style.display='';
+  document.getElementById('btnSignIn').style.display='none';
+  document.getElementById('signInState').style.display='none';
   await fetchExcel();
 }
-
-async function getToken() {
-  try {
-    const r = await msalApp.acquireTokenSilent({scopes:SCOPES, account:currentAccount});
-    return r.accessToken;
-  } catch(e) {
-    const r = await msalApp.acquireTokenPopup({scopes:SCOPES});
-    return r.accessToken;
-  }
+async function getToken(){
+  try{const r=await msalApp.acquireTokenSilent({scopes:SCOPES,account:currentAccount});return r.accessToken;}
+  catch(e){const r=await msalApp.acquireTokenPopup({scopes:SCOPES});return r.accessToken;}
 }
-
-// ── FETCH EXCEL FROM GRAPH API ────────────────────────────
-function saveUrl(val) {
-  try { localStorage.setItem('sp_file_url', val.trim()); } catch(e){}
-}
-
-function getSavedUrl() {
-  try { return localStorage.getItem('sp_file_url') || ''; } catch(e){ return ''; }
-}
-
-async function fetchExcel() {
-  const shareUrl = getSavedUrl();
-  if (!shareUrl) {
-    setStatus('Paste your SharePoint file link in the box above first.', 'err');
-    document.getElementById('signInState').style.display = '';
-    document.getElementById('mainContent').classList.remove('visible');
-    return;
-  }
+function saveUrl(val){try{localStorage.setItem('sp_file_url',val.trim());}catch(e){}}
+function getSavedUrl(){try{return localStorage.getItem('sp_file_url')||'';}catch(e){return '';}}
+async function fetchExcel(){
+  const shareUrl=getSavedUrl();
+  if(!shareUrl){setStatus('Paste your SharePoint file link first.','err');document.getElementById('signInState').style.display='';document.getElementById('mainContent').classList.remove('visible');return;}
   showLoading('Fetching file from SharePoint…');
-  try {
-    const token = await getToken();
-    // Encode share URL for Graph API shares endpoint
-    const encoded = btoa(shareUrl).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
-    const shareResp = await fetch(
-      `https://graph.microsoft.com/v1.0/shares/u!${encoded}/driveItem`,
-      {headers:{'Authorization':'Bearer ' + token}}
-    );
-    if (!shareResp.ok) {
-      const err = await shareResp.json();
-      throw new Error((err.error && err.error.message) || shareResp.statusText);
-    }
-    const item = await shareResp.json();
-    hideLoading();
-    await downloadFile(item, token);
-  } catch(e) {
-    hideLoading();
-    setStatus('Error: ' + e.message, 'err');
-  }
+  try{
+    const token=await getToken();
+    const encoded=btoa(shareUrl).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    const r=await fetch(`https://graph.microsoft.com/v1.0/shares/u!${encoded}/driveItem`,{headers:{'Authorization':'Bearer '+token}});
+    if(!r.ok){const err=await r.json();throw new Error((err.error&&err.error.message)||r.statusText);}
+    const item=await r.json();hideLoading();await downloadFile(item,token);
+  }catch(e){hideLoading();setStatus('Error: '+e.message,'err');}
 }
-
-async function downloadFile(item, token) {
-  showLoading('Downloading ' + item.name + '…');
-  try {
-    const dlUrl = item['@microsoft.graph.downloadUrl'];
-    let buf;
-    if (dlUrl) {
-      buf = await (await fetch(dlUrl)).arrayBuffer();
-    } else {
-      const driveId = item.parentReference && item.parentReference.driveId;
-      const url = driveId
-        ? `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${item.id}/content`
-        : `https://graph.microsoft.com/v1.0/me/drive/items/${item.id}/content`;
-      buf = await (await fetch(url, {headers:{'Authorization':'Bearer '+(await getToken())}})).arrayBuffer();
-    }
-    hideLoading();
-    parseBuffer(buf, item.name);
-  } catch(e) {
-    hideLoading();
-    setStatus('Download failed: ' + e.message, 'err');
-  }
+async function downloadFile(item,token){
+  showLoading('Downloading '+item.name+'…');
+  try{
+    const dlUrl=item['@microsoft.graph.downloadUrl'];let buf;
+    if(dlUrl){buf=await(await fetch(dlUrl)).arrayBuffer();}
+    else{const driveId=item.parentReference&&item.parentReference.driveId;const url=driveId?`https://graph.microsoft.com/v1.0/drives/${driveId}/items/${item.id}/content`:`https://graph.microsoft.com/v1.0/me/drive/items/${item.id}/content`;buf=await(await fetch(url,{headers:{'Authorization':'Bearer '+(await getToken())}})).arrayBuffer();}
+    hideLoading();parseBuffer(buf,item.name);
+  }catch(e){hideLoading();setStatus('Download failed: '+e.message,'err');}
 }
-
-function showFilePicker(items, token) {
-  window._pickerItems = items;
-  window._pickerToken = token;
-  document.getElementById('fileList').innerHTML = items.map((item,i) => `
-    <div class="file-item" onclick="pickFile(${i})">
-      <span>📄</span>
-      <span class="file-item-name">${item.name}</span>
-      <span class="file-item-path">${((item.parentReference||{}).path||'').replace('/drive/root:','')}</span>
-    </div>`).join('');
-  document.getElementById('filePicker').style.display = 'block';
+function showFilePicker(items,token){
+  window._pickerItems=items;window._pickerToken=token;
+  document.getElementById('fileList').innerHTML=items.map((item,i)=>`<div class="file-item" onclick="pickFile(${i})"><span>📄</span><span>${item.name}</span><span class="file-item-path">${((item.parentReference||{}).path||'').replace('/drive/root:','')}</span></div>`).join('');
+  document.getElementById('filePicker').style.display='block';
 }
-window.pickFile = async (i) => {
-  document.getElementById('filePicker').style.display = 'none';
-  await downloadFile(window._pickerItems[i], window._pickerToken);
-};
+window.pickFile=async(i)=>{document.getElementById('filePicker').style.display='none';await downloadFile(window._pickerItems[i],window._pickerToken);};
+async function refreshData(){document.getElementById('btnRefresh').disabled=true;await fetchExcel();document.getElementById('btnRefresh').disabled=false;}
 
-async function refreshData() {
-  document.getElementById('btnRefresh').disabled = true;
-  await fetchExcel();
-  document.getElementById('btnRefresh').disabled = false;
-}
-
-// ── PARSE EXCEL ───────────────────────────────────────────
-function parseBuffer(buf, fileName) {
-  try {
-    const wb   = XLSX.read(buf, {type:'array', cellDates:true});
-    if (!wb.SheetNames.includes(SHEET_NAME)) {
-      setStatus(`Sheet "${SHEET_NAME}" not found. Sheets: ${wb.SheetNames.join(', ')}`, 'err');
-      return;
-    }
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[SHEET_NAME], {header:1, defval:''});
-    const pts  = [];
-    for (let i = 1; i < rows.length; i++) {
-      const r = rows[i];
-      const fn = String(r[COL.firstName]||'').trim();
-      const ln = String(r[COL.lastName] ||'').trim();
-      if (!fn && !ln) continue;
-      let ds = '';
-      const rd = r[COL.date];
-      if (rd instanceof Date && !isNaN(rd)) ds = rd.toISOString().slice(0,10);
-      else if (typeof rd === 'number') {
-        try { const d=XLSX.SSF.parse_date_code(rd); if(d) ds=`${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`; } catch(e){}
-      }
+// ── PARSE ─────────────────────────────────────────────────
+function parseBuffer(buf){
+  try{
+    const wb=XLSX.read(buf,{type:'array',cellDates:true});
+    if(!wb.SheetNames.includes(SHEET_NAME)){setStatus(`Sheet "${SHEET_NAME}" not found.`,'err');return;}
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[SHEET_NAME],{header:1,defval:''});
+    const pts=[];
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];
+      const fn=String(r[COL.firstName]||'').trim();
+      const ln=String(r[COL.lastName]||'').trim();
+      if(!fn&&!ln)continue;
+      let ds='';
+      const rd=r[COL.date];
+      if(rd instanceof Date&&!isNaN(rd))ds=rd.toISOString().slice(0,10);
+      else if(typeof rd==='number'){try{const d=XLSX.SSF.parse_date_code(rd);if(d)ds=`${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;}catch(e){}}
+      let dobStr='';
+      const dobRaw=r[COL.dob];
+      if(dobRaw instanceof Date&&!isNaN(dobRaw))dobStr=dobRaw.toLocaleDateString();
+      else if(dobRaw)dobStr=String(dobRaw).trim();
+      let apptStr='';
+      const apptRaw=r[COL.apptDate];
+      if(apptRaw instanceof Date&&!isNaN(apptRaw))apptStr=apptRaw.toLocaleString();
+      else if(apptRaw)apptStr=String(apptRaw).trim();
+      let followStr='';
+      const followRaw=r[COL.followUp];
+      if(followRaw instanceof Date&&!isNaN(followRaw))followStr=followRaw.toLocaleDateString();
+      else if(followRaw)followStr=String(followRaw).trim();
       pts.push({
-        n: `${fn} ${ln}`.trim(), d:ds,
-        s: String(r[COL.source]    ||'').trim(),
-        st:String(r[COL.status]    ||'').trim(),
-        h: String(r[COL.hcpcs]     ||'').trim(),
-        t: String(r[COL.tier]      ||'').trim(),
+        n:`${fn} ${ln}`.trim(),d:ds,
+        s:String(r[COL.source]||'').trim(),
+        rt:String(r[COL.referredTo]||'').trim(),
+        dob:dobStr,
+        mid:String(r[COL.medicareId]||'').trim(),
+        gen:String(r[COL.gender]||'').trim(),
+        cg:String(r[COL.caregiver]||'').trim(),
+        cgc:String(r[COL.caregiverContact]||'').trim(),
+        cge:String(r[COL.caregiverEmail]||'').trim(),
+        st:String(r[COL.status]||'').trim(),
+        resp:String(r[COL.respite]||'').trim(),
+        notes:String(r[COL.notes]||'').trim(),
+        h:String(r[COL.hcpcs]||'').trim(),
+        startDate:String(r[COL.startDate]||'').trim(),
+        appt:apptStr,
+        zip:String(r[COL.zip]||'').trim(),
+        t:String(r[COL.tier]||'').trim(),
         ha:String(r[COL.homeAssess]||'').trim(),
-        c: String(r[COL.county]    ||'').trim(),
-        l: String(r[COL.letter]    ||'').trim().replace(/\n/g,''),
+        followUp:followStr,
+        c:String(r[COL.county]||'').trim(),
+        l:String(r[COL.letter]||'').trim().replace(/\n/g,' '),
       });
     }
-    PATIENTS = pts;
-    const now = new Date();
-    const lr  = document.getElementById('lastRefresh');
-    lr.textContent = `Updated ${now.toLocaleDateString([],{month:'short',day:'numeric'})} ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+    PATIENTS=pts;
+    const now=new Date();
+    const lr=document.getElementById('lastRefresh');
+    lr.textContent=`Updated ${now.toLocaleDateString([],{month:'short',day:'numeric'})} ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
     lr.classList.add('show');
+    document.getElementById('lastUpdatedPill').textContent=now.toLocaleDateString([],{month:'short',year:'numeric'});
     document.getElementById('btnRefresh').classList.add('show');
     renderDashboard();
-    setStatus(`✓ ${pts.length} records loaded`, 'ok');
-  } catch(e) {
-    setStatus('Parse error: ' + e.message, 'err');
-  }
+    setStatus(`✓ ${pts.length} records loaded`,'ok');
+  }catch(e){setStatus('Parse error: '+e.message,'err');}
 }
 
-// ── COMPUTE STATS ─────────────────────────────────────────
-function computeStats() {
-  const total     = PATIENTS.length;
-  const approved  = PATIENTS.filter(p=>p.st==='Approved'&&p.l).length;
-  const submitted = PATIENTS.filter(p=>p.st==='Submitted To Medicare').length;
-  const scheduled = PATIENTS.filter(p=>p.st==='Scheduled').length;
-  const denied    = PATIENTS.filter(p=>p.st==='Denied').length;
-  const monthMap  = {};
+// ── STATS ─────────────────────────────────────────────────
+function computeStats(){
+  const total=PATIENTS.length;
+  const approved=PATIENTS.filter(p=>p.st==='Approved'&&p.l).length;
+  const submitted=PATIENTS.filter(p=>p.st==='Submitted To Medicare').length;
+  const scheduled=PATIENTS.filter(p=>p.st==='Scheduled').length;
+  const monthMap={};
   PATIENTS.forEach(p=>{
-    if(!p.d) return;
+    if(!p.d)return;
     const mk=p.d.slice(0,7);
-    if(!monthMap[mk]) monthMap[mk]={total:0,approved:0};
+    if(!monthMap[mk])monthMap[mk]={total:0,approved:0};
     monthMap[mk].total++;
-    if(p.st==='Approved'&&p.l) monthMap[mk].approved++;
+    if(p.st==='Approved'&&p.l)monthMap[mk].approved++;
   });
-  const mks  = Object.keys(monthMap).sort();
-  const mlbl = mks.map(k=>{const[y,m]=k.split('-');return new Date(+y,+m-1,1).toLocaleString('default',{month:'short'})+" '"+String(y).slice(2);});
-  return {
-    total,approved,submitted,scheduled,denied,
-    denialRate: total>0?Math.round(denied/total*100):0,
-    monthKeys:mks, monthLabels:mlbl,
+  const mks=Object.keys(monthMap).sort();
+  const mlbl=mks.map(k=>{const[y,m]=k.split('-');return new Date(+y,+m-1,1).toLocaleString('default',{month:'short'})+" '"+String(y).slice(2);});
+  // Best month by referral count
+  let bestMk='',bestTotal=0;
+  mks.forEach(k=>{if(monthMap[k].total>bestTotal){bestTotal=monthMap[k].total;bestMk=k;}});
+  _bestMonthKey=bestMk;
+  const bestAppr=bestMk?monthMap[bestMk].approved:0;
+  const bestRate=bestTotal>0?Math.round(bestAppr/bestTotal*100):0;
+  const bestLabel=bestMk?mlbl[mks.indexOf(bestMk)]:'—';
+  // Top source by approved count
+  const srcMap={};
+  PATIENTS.forEach(p=>{
+    if(!p.s)return;
+    if(!srcMap[p.s])srcMap[p.s]={total:0,approved:0};
+    srcMap[p.s].total++;
+    if(p.st==='Approved'&&p.l)srcMap[p.s].approved++;
+  });
+  let topSrc='',topApproved=0;
+  Object.entries(srcMap).forEach(([s,v])=>{if(v.approved>topApproved){topApproved=v.approved;topSrc=s;}});
+  _topSource=topSrc;
+  const topTotal=topSrc?srcMap[topSrc].total:0;
+  const topRate=topTotal>0?Math.round(topApproved/topTotal*100):0;
+  return{total,approved,submitted,scheduled,
+    monthKeys:mks,monthLabels:mlbl,
     monthTotal:mks.map(k=>monthMap[k].total),
-    monthAppr: mks.map(k=>monthMap[k].approved),
-    monthRate: mks.map(k=>monthMap[k].total>0?Math.round(monthMap[k].approved/monthMap[k].total*100):0),
-    rangeStr:  mlbl.length>0?`${mlbl[0]} – ${mlbl[mlbl.length-1]}`:'—',
-    datedCount:PATIENTS.filter(p=>p.d).length
+    monthAppr:mks.map(k=>monthMap[k].approved),
+    monthRate:mks.map(k=>monthMap[k].total>0?Math.round(monthMap[k].approved/monthMap[k].total*100):0),
+    rangeStr:mlbl.length>0?`${mlbl[0]} – ${mlbl[mlbl.length-1]}`:'—',
+    datedCount:PATIENTS.filter(p=>p.d).length,
+    bestLabel,bestTotal,bestAppr,bestRate,
+    topSrc,topTotal,topApproved,topRate
   };
 }
 
 // ── RENDER ────────────────────────────────────────────────
-function renderDashboard() {
-  const s = computeStats();
-  document.getElementById('signInState').style.display = 'none';
+function renderDashboard(){
+  const s=computeStats();
+  document.getElementById('signInState').style.display='none';
   document.getElementById('mainContent').classList.add('visible');
-  document.getElementById('headerSub').textContent    = `${s.rangeStr} · Source: SharePoint · Live data`;
-  document.getElementById('pillTotal').textContent    = s.total;
-  document.getElementById('pillRange').textContent    = s.rangeStr;
-  document.getElementById('pillDenial').textContent   = s.denialRate+'%';
-  document.getElementById('kpiTotal').textContent     = s.total;
-  document.getElementById('kpiApproved').textContent  = s.approved;
-  document.getElementById('kpiApprRate').textContent  = s.total>0?Math.round(s.approved/s.total*100)+'% Rate':'—';
-  document.getElementById('kpiSubmitted').textContent = s.submitted;
-  document.getElementById('kpiScheduled').textContent = s.scheduled;
-  document.getElementById('kpiDenied').textContent    = s.denied;
-  document.getElementById('kpiDenialRate').textContent= s.denialRate+'%';
-  document.getElementById('chartBarSub').textContent  = `Referrals with a date only (${s.datedCount} of ${s.total} records)`;
-  document.getElementById('monthBtns').innerHTML = s.monthKeys.map((k,i)=>
-    `<button class="fbtn" onclick="filterMonth('${k}',this)">${s.monthLabels[i]}</button>`).join('');
+  document.getElementById('dashSubtitle').textContent=`Medicare GUIDE Program · ${s.rangeStr} · ${s.total} total referrals`;
+  document.getElementById('kpiTotal').textContent=s.total;
+  document.getElementById('kpiDateRange').textContent=s.rangeStr;
+  document.getElementById('kpiApproved').textContent=s.approved;
+  document.getElementById('kpiApprSub').textContent=`Out of ${s.total} referrals`;
+  document.getElementById('kpiApprRate').textContent=s.total>0?(Math.round(s.approved/s.total*100)+'% approval rate'):'—';
+  document.getElementById('kpiSubmitted').textContent=s.submitted;
+  document.getElementById('kpiSubmPct').textContent=s.total>0?(Math.round(s.submitted/s.total*100)+'% of referrals'):'—';
+  document.getElementById('kpiScheduled').textContent=s.scheduled;
+  document.getElementById('kpiSchedPct').textContent=s.total>0?(Math.round(s.scheduled/s.total*100)+'% of referrals'):'—';
+  document.getElementById('kpiBestMonth').textContent=s.bestLabel;
+  document.getElementById('kpiBestSub').textContent=`${s.bestTotal} referrals · ${s.bestAppr} approved`;
+  document.getElementById('kpiBestRate').textContent=s.bestRate+'% monthly rate';
+  document.getElementById('kpiTopName').textContent=s.topSrc||'—';
+  document.getElementById('kpiTopSub').textContent=`${s.topTotal} referrals · ${s.topApproved} approved`;
+  document.getElementById('kpiTopRate').textContent=s.topRate+'% approval rate';
+  document.getElementById('monthBtns').innerHTML=s.monthKeys.map((k,i)=>`<button class="mbtn" onclick="filterMonth('${k}',this)">${s.monthLabels[i].split(' ')[0]}</button>`).join('');
   renderCharts(s);
   currentMonth='all';
   renderSrcTable();
 }
 
 // ── CHARTS ────────────────────────────────────────────────
-const CD={plugins:{legend:{display:false},tooltip:{backgroundColor:'#1f2330',borderColor:'#2a2f3e',borderWidth:1,titleColor:'#e8eaf0',bodyColor:'#9ca3af',padding:10}},scales:{x:{grid:{color:'#2a2f3e'},ticks:{color:'#6b7280',font:{size:11}}},y:{grid:{color:'#2a2f3e'},ticks:{color:'#6b7280',font:{size:11}}}}};
-
+const CHART_DEFAULTS={
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c2128',borderColor:'#30363d',borderWidth:1,titleColor:'#e6edf3',bodyColor:'#7d8590',padding:10}},
+  scales:{x:{grid:{color:'rgba(48,54,61,.6)'},ticks:{color:'#7d8590',font:{size:11}}},y:{grid:{color:'rgba(48,54,61,.6)'},ticks:{color:'#7d8590',font:{size:11}}}}
+};
 function renderCharts(s){
   if(barChart){barChart.destroy();barChart=null;}
   if(lineChart){lineChart.destroy();lineChart=null;}
   barChart=new Chart(document.getElementById('barChart'),{type:'bar',data:{labels:s.monthLabels,datasets:[
-    {label:'Total Referrals',data:s.monthTotal,backgroundColor:'rgba(79,255,176,0.18)',borderColor:'#4fffb0',borderWidth:1.5,borderRadius:4},
-    {label:'Approved',data:s.monthAppr,backgroundColor:'rgba(77,184,255,0.22)',borderColor:'#4db8ff',borderWidth:1.5,borderRadius:4}
-  ]},options:{...CD,responsive:true,maintainAspectRatio:false,plugins:{...CD.plugins,legend:{display:true,labels:{color:'#9ca3af',font:{size:11},boxWidth:12,padding:16}}},onClick:(e,els)=>{if(els.length)openMonthModal(s.monthKeys[els[0].index],s.monthLabels[els[0].index]);}}});
-  lineChart=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:s.monthLabels,datasets:[{label:'Approval Rate %',data:s.monthRate,borderColor:'#f9c846',backgroundColor:'rgba(249,200,70,0.08)',borderWidth:2,pointBackgroundColor:'#f9c846',pointRadius:4,tension:0.35,fill:true}]},options:{...CD,responsive:true,maintainAspectRatio:false,scales:{...CD.scales,y:{...CD.scales.y,min:0,max:100,ticks:{...CD.scales.y.ticks,callback:v=>v+'%'}}},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:ctx=>ctx.raw+'%'}}},onClick:(e,els)=>{if(els.length)openMonthModal(s.monthKeys[els[0].index],s.monthLabels[els[0].index]);}}});
+    {label:'Total Referrals',data:s.monthTotal,backgroundColor:'rgba(56,97,151,0.7)',borderColor:'#3861a3',borderWidth:1,borderRadius:3},
+    {label:'Approved',data:s.monthAppr,backgroundColor:'rgba(63,185,80,0.75)',borderColor:'#3fb950',borderWidth:1,borderRadius:3}
+  ]},options:{...CHART_DEFAULTS,responsive:true,maintainAspectRatio:false,
+    plugins:{...CHART_DEFAULTS.plugins,legend:{display:true,labels:{color:'#7d8590',font:{size:11},boxWidth:10,padding:14}}},
+    onClick:(e,els)=>{if(els.length)openMonthModal(s.monthKeys[els[0].index],s.monthLabels[els[0].index]);}}});
+  lineChart=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:s.monthLabels,datasets:[{
+    label:'Approval Rate %',data:s.monthRate,borderColor:'#3fb950',backgroundColor:'rgba(63,185,80,0.08)',
+    borderWidth:2,pointBackgroundColor:'#3fb950',pointBorderColor:'#0d1117',pointBorderWidth:2,pointRadius:5,tension:0.4,fill:true
+  }]},options:{...CHART_DEFAULTS,responsive:true,maintainAspectRatio:false,
+    scales:{...CHART_DEFAULTS.scales,y:{...CHART_DEFAULTS.scales.y,min:0,max:100,ticks:{...CHART_DEFAULTS.scales.y.ticks,callback:v=>v+'%'}}},
+    plugins:{...CHART_DEFAULTS.plugins,tooltip:{...CHART_DEFAULTS.plugins.tooltip,callbacks:{label:ctx=>ctx.raw+'%'}}},
+    onClick:(e,els)=>{if(els.length)openMonthModal(s.monthKeys[els[0].index],s.monthLabels[els[0].index]);}}});
 }
 
 // ── SOURCE TABLE ──────────────────────────────────────────
@@ -657,55 +699,133 @@ function renderSrcTable(){
   const sources=[...new Set(PATIENTS.map(p=>p.s).filter(Boolean))];
   let data=sources.map(src=>{
     const pts=PATIENTS.filter(p=>{
-      if(p.s!==src) return false;
-      if(currentMonth!=='all'&&(!p.d||!p.d.startsWith(currentMonth))) return false;
+      if(p.s!==src)return false;
+      if(currentMonth!=='all'&&(!p.d||!p.d.startsWith(currentMonth)))return false;
       return true;
     });
     return{source:src,total:pts.length,approved:pts.filter(p=>p.st==='Approved'&&p.l).length,submitted:pts.filter(p=>p.st==='Submitted To Medicare').length,scheduled:pts.filter(p=>p.st==='Scheduled').length};
   }).filter(d=>d.total>0);
   data.sort((a,b)=>b.total-a.total);
-  data=data.map((d,i)=>({...d,rank:i+1}));
+  const origRank=Object.fromEntries(data.map((d,i)=>[d.source,i+1]));
   data.sort((a,b)=>{let av=a[srcSortKey],bv=b[srcSortKey];if(typeof av==='string')return srcSortDir*av.localeCompare(bv);return srcSortDir*(av-bv);});
-  document.querySelectorAll('.src-sortable').forEach(th=>{th.classList.remove('asc','desc');const key=th.getAttribute('onclick').match(/sortSrc\('(.+?)'\)/)?.[1];if(key===srcSortKey)th.classList.add(srcSortDir===1?'asc':'desc');});
-  document.getElementById('srcBody').innerHTML=data.map((d,i)=>{
+  // Update sort indicators
+  document.querySelectorAll('.src-table .sortable').forEach(th=>{
+    th.classList.remove('asc','desc');
+    const k=th.getAttribute('onclick').match(/sortSrc\('(.+?)'\)/)?.[1];
+    if(k===srcSortKey)th.classList.add(srcSortDir===1?'asc':'desc');
+  });
+  // Totals
+  const totTotal=data.reduce((s,d)=>s+d.total,0);
+  const totAppr=data.reduce((s,d)=>s+d.approved,0);
+  const totSubm=data.reduce((s,d)=>s+d.submitted,0);
+  const totSched=data.reduce((s,d)=>s+d.scheduled,0);
+  const totRate=totTotal>0?Math.round(totAppr/totTotal*100):0;
+  const maxTotal=Math.max(...data.map(d=>d.total),1);
+  const rows=data.map((d,i)=>{
     const rate=d.total>0?Math.round(d.approved/d.total*100):0;
-    const rc=rate>=60?'ph':rate>=40?'pm':'pl';
+    const rc=rate>=50?'rate-h':rate>=25?'rate-m':'rate-l';
     const e=d.source.replace(/'/g,"\\'");
-    return`<tr><td class="rank">${i+1}</td><td class="sname">${d.source}</td><td class="r"><span class="cn" onclick="openSourceModal('${e}','all')">${d.total}</span></td><td class="r">${d.approved>0?`<span class="cn ph" onclick="openSourceModal('${e}','approved')">${d.approved}</span>`:'<span class="zero">—</span>'}</td><td class="r">${d.submitted>0?`<span class="cn sv" onclick="openSourceModal('${e}','submitted')">${d.submitted}</span>`:'<span class="zero">—</span>'}</td><td class="r">${d.scheduled>0?`<span class="cn sc-val" onclick="openSourceModal('${e}','scheduled')">${d.scheduled}</span>`:'<span class="zero">—</span>'}</td><td class="barcell"><span class="pv ${rc}">${rate}%</span><div class="btrack"><div class="bfill" style="width:${rate}%"></div></div></td></tr>`;
-  }).join('');
+    const apprCell=d.approved>0?`<span class="cn g" onclick="openSourceModal('${e}','approved')">${d.approved}</span>`:`<span class="cn g" onclick="openSourceModal('${e}','approved')">0</span>`;
+    const submCell=d.submitted>0?`<span class="cn a" onclick="openSourceModal('${e}','submitted')">${d.submitted}</span>`:`<span class="zero">—</span>`;
+    const schedCell=d.scheduled>0?`<span class="cn b" onclick="openSourceModal('${e}','scheduled')">${d.scheduled}</span>`:`<span class="zero">—</span>`;
+    const volPct=Math.round(d.total/maxTotal*100);
+    return`<tr>
+      <td style="color:var(--muted);font-size:.72rem">${origRank[d.source]||i+1}</td>
+      <td style="font-weight:500">${d.source}</td>
+      <td class="r"><span class="cn w" onclick="openSourceModal('${e}','all')">${d.total}</span></td>
+      <td class="r">${apprCell}</td>
+      <td class="r">${submCell}</td>
+      <td class="r">${schedCell}</td>
+      <td class="r"><span class="rate-val ${rc}">${rate}%</span></td>
+      <td><div class="vol-bar-wrap"><div class="vol-bar-bg"><div class="vol-bar-fill" style="width:${volPct}%"></div></div></div></td>
+    </tr>`;
+  });
+  const totRateClass=totRate>=50?'rate-h':totRate>=25?'rate-m':'rate-l';
+  rows.push(`<tr class="total-row">
+    <td></td><td>TOTAL</td>
+    <td class="r">${totTotal}</td>
+    <td class="r" style="color:var(--green)">${totAppr}</td>
+    <td class="r" style="color:var(--amber)">${totSubm>0?totSubm:'—'}</td>
+    <td class="r" style="color:var(--blue)">${totSched>0?totSched:'—'}</td>
+    <td class="r"><span class="rate-val ${totRateClass}">${totRate}%</span></td>
+    <td></td>
+  </tr>`);
+  document.getElementById('srcBody').innerHTML=rows.join('');
 }
-function filterMonth(m,btn){currentMonth=m;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderSrcTable();}
+function filterMonth(m,btn){currentMonth=m;document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderSrcTable();}
 function sortSrc(k){if(srcSortKey===k)srcSortDir*=-1;else{srcSortKey=k;srcSortDir=-1;}renderSrcTable();}
 
 // ── MODAL ─────────────────────────────────────────────────
-function statusBadge(st){if(!st)return'<span class="sbadge so">—</span>';if(st==='Approved')return`<span class="sbadge sa">Approved</span>`;if(st==='Denied')return`<span class="sbadge sd">Denied</span>`;if(st==='Submitted To Medicare')return`<span class="sbadge ss">Submitted</span>`;if(st==='Scheduled')return`<span class="sbadge sc">Scheduled</span>`;return`<span class="sbadge so">${st}</span>`;}
+function sBadge(st){
+  if(!st)return'<span class="sbadge so">—</span>';
+  if(st==='Approved')return'<span class="sbadge sa">Approved</span>';
+  if(st==='Denied')return'<span class="sbadge sd">Denied</span>';
+  if(st==='Submitted To Medicare')return'<span class="sbadge ss">Submitted</span>';
+  if(st==='Scheduled')return'<span class="sbadge sc">Scheduled</span>';
+  return`<span class="sbadge so">${st}</span>`;
+}
 function openModal(f){
+  modalPatients=PATIENTS.filter(p=>{
+    if(f==='approved')return p.st==='Approved'&&p.l;
+    if(f==='submitted')return p.st==='Submitted To Medicare';
+    if(f==='scheduled')return p.st==='Scheduled';
+    if(f==='denied')return p.st==='Denied';
+    return true;
+  });
   const lbl={all:`All Patients (${PATIENTS.length})`,approved:'Approved Patients',submitted:'Submitted to Medicare',scheduled:'Scheduled',denied:'Denied Patients'};
-  modalPatients=PATIENTS.filter(p=>{if(f==='approved')return p.st==='Approved'&&p.l;if(f==='submitted')return p.st==='Submitted To Medicare';if(f==='scheduled')return p.st==='Scheduled';if(f==='denied')return p.st==='Denied';return true;});
-  document.getElementById('modalTitle').textContent=lbl[f]||'Patient List';
-  document.getElementById('modalMeta').textContent=`${modalPatients.length} patients · Click column headers to sort`;
+  document.getElementById('modalTitle').textContent=lbl[f]||'Patients';
+  document.getElementById('modalMeta').textContent=`${modalPatients.length} patients · Click column headers to sort · Use filters below to search`;
   clearFI();renderModal();document.getElementById('overlay').classList.add('open');
 }
-function openMonthModal(mk,lbl){modalPatients=PATIENTS.filter(p=>p.d&&p.d.startsWith(mk));document.getElementById('modalTitle').textContent=`Referrals — ${lbl}`;document.getElementById('modalMeta').textContent=`${modalPatients.length} patients`;clearFI();renderModal();document.getElementById('overlay').classList.add('open');}
+function openMonthModal(mk,lbl){
+  modalPatients=PATIENTS.filter(p=>p.d&&p.d.startsWith(mk));
+  document.getElementById('modalTitle').textContent=`Referrals — ${lbl}`;
+  document.getElementById('modalMeta').textContent=`${modalPatients.length} patients in ${lbl}`;
+  clearFI();renderModal();document.getElementById('overlay').classList.add('open');
+}
 function openSourceModal(src,f){
   const all=PATIENTS.filter(p=>p.s===src);
-  modalPatients=all.filter(p=>{if(f==='approved')return p.st==='Approved'&&p.l;if(f==='submitted')return p.st==='Submitted To Medicare';if(f==='scheduled')return p.st==='Scheduled';return true;});
+  modalPatients=all.filter(p=>{
+    if(f==='approved')return p.st==='Approved'&&p.l;
+    if(f==='submitted')return p.st==='Submitted To Medicare';
+    if(f==='scheduled')return p.st==='Scheduled';
+    return true;
+  });
   const lbl=f==='all'?'All':f.charAt(0).toUpperCase()+f.slice(1);
   document.getElementById('modalTitle').textContent=`${src} — ${lbl}`;
   document.getElementById('modalMeta').textContent=`${modalPatients.length} patients · ${src}`;
   clearFI();renderModal();document.getElementById('overlay').classList.add('open');
 }
+function openBestMonthModal(){if(!_bestMonthKey)return;const s=computeStats();openMonthModal(_bestMonthKey,s.bestLabel);}
+function openTopSourceModal(){if(!_topSource)return;openSourceModal(_topSource,'all');}
 function clearFI(){['cf-n','cf-d','cf-s','cf-t','cf-c'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const st=document.getElementById('cf-st');if(st)st.value='';}
-function clearFilters(){clearFI();applyColFilters();}
-function applyColFilters(){
-  const n=document.getElementById('cf-n').value.toLowerCase(),d=document.getElementById('cf-d').value.toLowerCase(),s=document.getElementById('cf-s').value.toLowerCase(),st=document.getElementById('cf-st').value,t=document.getElementById('cf-t').value.toLowerCase(),c=document.getElementById('cf-c').value.toLowerCase();
-  modalFiltered=modalPatients.filter(p=>{if(n&&!p.n.toLowerCase().includes(n))return false;if(d&&!(p.d||'').includes(d))return false;if(s&&!p.s.toLowerCase().includes(s))return false;if(st&&p.st!==st)return false;if(t&&!p.t.toLowerCase().includes(t))return false;if(c&&!p.c.toLowerCase().includes(c))return false;return true;});
+function clearFilters(){clearFI();applyFilters();}
+function applyFilters(){
+  const n=document.getElementById('cf-n').value.toLowerCase();
+  const d=document.getElementById('cf-d').value.toLowerCase();
+  const s=document.getElementById('cf-s').value.toLowerCase();
+  const st=document.getElementById('cf-st').value;
+  const t=document.getElementById('cf-t').value.toLowerCase();
+  const c=document.getElementById('cf-c').value.toLowerCase();
+  modalFiltered=modalPatients.filter(p=>{
+    if(n&&!p.n.toLowerCase().includes(n))return false;
+    if(d&&!(p.d||'').includes(d))return false;
+    if(s&&!p.s.toLowerCase().includes(s))return false;
+    if(st&&p.st!==st)return false;
+    if(t&&!p.t.toLowerCase().includes(t))return false;
+    if(c&&!p.c.toLowerCase().includes(c))return false;
+    return true;
+  });
   renderModalRows();
 }
 function renderModal(){
   modalFiltered=[...modalPatients];
   modalFiltered.sort((a,b)=>{let av=a[modalSortKey]||'',bv=b[modalSortKey]||'';return modalSortDir*(av<bv?-1:av>bv?1:0);});
-  document.querySelectorAll('.mtable .sortable').forEach(th=>{th.classList.remove('asc','desc');const k=th.getAttribute('onclick').match(/sortModal\('(.+?)'\)/)?.[1];if(k===modalSortKey)th.classList.add(modalSortDir===1?'asc':'desc');});
+  document.querySelectorAll('.mtable .sortable').forEach(th=>{
+    th.classList.remove('asc','desc');
+    const k=th.getAttribute('onclick').match(/sortModal\('(.+?)'\)/)?.[1];
+    if(k===modalSortKey)th.classList.add(modalSortDir===1?'asc':'desc');
+  });
   renderModalRows();
 }
 function sortModal(k){if(modalSortKey===k)modalSortDir*=-1;else{modalSortKey=k;modalSortDir=1;}renderModal();}
@@ -715,7 +835,27 @@ function renderModalRows(){
   document.getElementById('modalTotal').textContent=modalPatients.length;
   document.getElementById('modalStats').innerHTML=modalFiltered.length>0?`Approved: <span>${appr}</span> &nbsp;|&nbsp; Rate: <span>${Math.round(appr/modalFiltered.length*100)}%</span>`:'';
   document.getElementById('modalEmpty').style.display=modalFiltered.length===0?'block':'none';
-  document.getElementById('modalBody').innerHTML=modalFiltered.map(p=>`<tr><td style="font-weight:500">${p.n||'—'}</td><td>${p.d||'—'}</td><td>${p.s||'—'}</td><td>${statusBadge(p.st)}</td><td>${p.t?`<span style="font-size:0.75rem;padding:2px 8px;border-radius:100px;background:rgba(79,255,176,0.1);color:var(--accent)">${p.t}</span>`:'—'}</td><td>${p.c||'—'}</td><td style="font-size:0.75rem;color:var(--muted)">${p.h||'—'}</td><td style="font-size:0.75rem">${p.ha||'—'}</td><td style="font-size:0.72rem;color:var(--muted);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.l||'—'}</td></tr>`).join('');
+  document.getElementById('modalBody').innerHTML=modalFiltered.map(p=>`<tr>
+    <td style="font-weight:500;white-space:nowrap">${p.n||'—'}</td>
+    <td style="white-space:nowrap">${p.d||'—'}</td>
+    <td>${sBadge(p.st)}</td>
+    <td style="white-space:nowrap">${p.s||'—'}</td>
+    <td style="font-size:.72rem;color:var(--muted)">${p.rt||'—'}</td>
+    <td>${p.t?`<span style="font-size:.68rem;padding:2px 7px;border-radius:20px;background:var(--green-dim);color:var(--green);border:1px solid rgba(63,185,80,.3)">${p.t}</span>`:'—'}</td>
+    <td>${p.c||'—'}</td>
+    <td style="font-size:.72rem;color:var(--muted)">${p.h||'—'}</td>
+    <td style="font-size:.72rem">${p.ha||'—'}</td>
+    <td style="font-size:.72rem;white-space:nowrap">${p.appt||'—'}</td>
+    <td style="font-size:.72rem;white-space:nowrap">${p.followUp||'—'}</td>
+    <td style="font-size:.72rem;white-space:nowrap">${p.dob||'—'}</td>
+    <td style="font-size:.72rem">${p.gen||'—'}</td>
+    <td style="font-size:.72rem">${p.zip||'—'}</td>
+    <td style="font-size:.72rem;color:var(--muted)">${p.mid||'—'}</td>
+    <td style="font-size:.72rem">${p.cg||'—'}${p.cgc?'<br><span style="color:var(--muted)">'+p.cgc+'</span>':''}</td>
+    <td style="font-size:.72rem;color:var(--muted)">${p.resp||'—'}</td>
+    <td style="font-size:.7rem;color:var(--muted);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.l||'—'}</td>
+    <td class="notes-cell ${p.notes?'has-notes':''}">${p.notes||'—'}</td>
+  </tr>`).join('');
 }
 function closeModal(){document.getElementById('overlay').classList.remove('open');}
 function closeModalOutside(e){if(e.target===document.getElementById('overlay'))closeModal();}
@@ -727,11 +867,8 @@ function hideLoading(){document.getElementById('loadingOverlay').classList.remov
 function setStatus(msg,type){const el=document.getElementById('statusBadge');el.className='status-badge status-'+type+' show';el.textContent=msg;}
 function clearStatus(){const el=document.getElementById('statusBadge');el.classList.remove('show');}
 
-window.addEventListener("load", function() {
-  if (typeof msal === "undefined") {
-    setStatus("Microsoft login library failed to load. Check your internet connection.", "err");
-    return;
-  }
+window.addEventListener('load',function(){
+  if(typeof msal==='undefined'){setStatus('Microsoft login library failed to load.','err');return;}
   boot();
 });
 </script>
