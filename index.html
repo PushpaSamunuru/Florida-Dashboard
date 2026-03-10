@@ -391,7 +391,7 @@ async function boot() {
       auth:{
         clientId: CLIENT_ID,
         authority: 'https://login.microsoftonline.com/' + TENANT_ID,
-        redirectUri: 'http://localhost:8080'
+        redirectUri: window.location.href.split("#")[0].split("?")[0]
       },
       cache:{cacheLocation:'localStorage',storeAuthStateInCookie:true}
     });
