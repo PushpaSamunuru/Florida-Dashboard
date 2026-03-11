@@ -270,34 +270,11 @@ select.col-filter{cursor:pointer;}
   <div class="modal">
     <div class="mhead">
       <div><div class="mtitle" id="modalTitle">Patients</div><div class="mmeta" id="modalMeta"></div></div>
-      <div style="display:flex;align-items:center;gap:10px;margin-left:auto;margin-right:12px">
-        <span style="font-size:.72rem;color:var(--muted)">Showing <strong id="modalShowCount" style="color:var(--text)">0</strong> of <strong id="modalTotalCount" style="color:var(--text)">0</strong></span>
-      </div>
+      <span id="modalShowCount" style="display:none"></span><span id="modalTotalCount" style="display:none"></span>
       <button class="mclose" onclick="closeModal()">✕</button>
     </div>
     <!-- STATUS PILLS -->
-    <div style="padding:10px 16px 0;display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid var(--border);padding-bottom:10px;" id="statusPills"></div>
-    <!-- FILTER BAR -->
-    <div style="padding:8px 16px;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;background:var(--surface2);border-bottom:1px solid var(--border);">
-      <input class="col-filter" id="cf-n" placeholder="Search name…" oninput="applyFilters()" style="flex:1;min-width:120px;max-width:200px;">
-      <input class="col-filter" id="cf-s" placeholder="Search source…" oninput="applyFilters()" style="flex:1;min-width:120px;max-width:200px;">
-      <select class="col-filter" id="cf-st" onchange="applyFilters()" style="min-width:130px;">
-        <option value="">All statuses</option>
-        <option>Approved</option><option>Denied</option><option>Submitted To Medicare</option>
-        <option>Scheduled</option><option>No Dementia</option><option>Dementia Eligible</option>
-        <option>Medicare Eligible</option><option>CN Virtual Visit</option>
-        <option>Care Plan Complete</option><option>Education</option>
-        <option>Bill For 99483</option><option>Home Visit</option><option>Bill for Guide</option>
-      </select>
-      <input class="col-filter" id="cf-d" placeholder="e.g. 2/2026" oninput="applyFilters()" style="min-width:90px;max-width:120px;">
-      <input class="col-filter" id="cf-dob" placeholder="Search DOB…" oninput="applyFilters()" style="min-width:100px;max-width:130px;">
-      <input class="col-filter" id="cf-c" placeholder="Search county…" oninput="applyFilters()" style="min-width:110px;max-width:150px;">
-      <select class="col-filter" id="cf-t" onchange="applyFilters()" style="min-width:100px;">
-        <option value="">All tiers</option>
-        <option>1</option><option>2</option><option>3</option>
-      </select>
-      <button class="clear-btn" onclick="clearFilters()">✕ Clear filters</button>
-    </div>
+    <div style="padding:10px 16px;display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid var(--border);" id="statusPills"></div>
     <div class="mbody">
       <table class="mtable">
         <thead>
@@ -311,6 +288,33 @@ select.col-filter{cursor:pointer;}
             <th class="sortable" onclick="sortModal('c')">County <span class="sort-icon">↕</span></th>
             <th class="sortable" onclick="sortModal('t')">Tier <span class="sort-icon">↕</span></th>
             <th>HCPCS</th>
+          </tr>
+          <!-- INLINE FILTER ROW matching screenshot 2 -->
+          <tr style="background:var(--surface2);">
+            <td></td>
+            <td><input class="col-filter" id="cf-n" placeholder="Search name…" oninput="applyFilters()" style="width:100%"></td>
+            <td><input class="col-filter" id="cf-s" placeholder="Search source…" oninput="applyFilters()" style="width:100%"></td>
+            <td>
+              <select class="col-filter" id="cf-st" onchange="applyFilters()" style="width:100%">
+                <option value="">All statuses</option>
+                <option>Approved</option><option>Denied</option><option>Submitted To Medicare</option>
+                <option>Scheduled</option><option>No Dementia</option><option>Dementia Eligible</option>
+                <option>Medicare Eligible</option><option>CN Virtual Visit</option>
+                <option>Care Plan Complete</option><option>Education</option>
+                <option>Bill For 99483</option><option>Home Visit</option><option>Bill for Guide</option>
+              </select>
+            </td>
+            <td><input class="col-filter" id="cf-d" placeholder="e.g. 2/2026" oninput="applyFilters()" style="width:100%"></td>
+            <td><input class="col-filter" id="cf-dob" placeholder="Search DOB…" oninput="applyFilters()" style="width:100%"></td>
+            <td><input class="col-filter" id="cf-c" placeholder="Search county…" oninput="applyFilters()" style="width:100%"></td>
+            <td>
+              <select class="col-filter" id="cf-t" onchange="applyFilters()" style="width:100%">
+                <option value="">All tiers</option>
+                <option>High</option><option>Medium</option><option>Low</option>
+                <option>1</option><option>2</option><option>3</option>
+              </select>
+            </td>
+            <td></td>
           </tr>
         </thead>
         <tbody id="modalBody"></tbody>
@@ -883,12 +887,15 @@ function renderModalRows() {
   const totalAppr    = modalPatients.filter(p=>p.st==='Approved'&&p.l).length;
   const totalSubm    = modalPatients.filter(p=>p.st==='Submitted To Medicare').length;
   const totalDenied  = modalPatients.filter(p=>p.st==='Denied').length;
+  const showing      = modalFiltered.length;
+  const total        = modalPatients.length;
   document.getElementById('modalStats').innerHTML =
-    `<span style="color:var(--green)">${totalAppr} approved</span>` +
-    `<span style="color:var(--amber)">${totalSubm} submitted</span>` +
-    `<span style="color:var(--red)">${totalDenied} denied</span>`;
-  document.getElementById('modalShowCount').textContent = modalFiltered.length;
-  document.getElementById('modalTotalCount').textContent = modalPatients.length;
+    `<span style="color:var(--muted);font-weight:400">Showing</span> <span style="color:var(--text)">${showing}</span> <span style="color:var(--muted);font-weight:400">of</span> <span style="color:var(--text)">${total}</span>` +
+    `&nbsp;&nbsp;·&nbsp;&nbsp;<span style="color:var(--green)">${totalAppr} approved</span>` +
+    `&nbsp;<span style="color:var(--amber)">${totalSubm} submitted</span>` +
+    `&nbsp;<span style="color:var(--red)">${totalDenied} denied</span>`;
+  document.getElementById('modalShowCount').textContent = showing;
+  document.getElementById('modalTotalCount').textContent = total;
 
   document.getElementById('modalEmpty').style.display = modalFiltered.length===0?'block':'none';
 
