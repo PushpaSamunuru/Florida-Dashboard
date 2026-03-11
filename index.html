@@ -434,6 +434,8 @@ const COL = {
   date:0, firstName:1, lastName:2, source:3, referredTo:4,
   dob:5, medicareId:6, gender:7, caregiver:8, caregiverContact:9, caregiverEmail:10,
   status:11, respite:12, notes:13, hcpcs:14, startDate:15, apptDate:16,
+  augCalls:17, sepCalls:18, octCalls:19, novCalls:20, decCalls:21,
+  jan26:22, feb26:23, mar26:24,
   zip:25, tier:26, homeAssess:27, followUp:28, county:29, letter:30
 };
 
@@ -557,6 +559,11 @@ function parseBuffer(buf){
       const followRaw=r[COL.followUp];
       if(followRaw instanceof Date&&!isNaN(followRaw))followStr=followRaw.toLocaleDateString();
       else if(followRaw)followStr=String(followRaw).trim();
+      let startDate='';
+      const startRaw=r[COL.startDate];
+      if(startRaw instanceof Date&&!isNaN(startRaw))startDate=startRaw.toLocaleDateString();
+      else if(typeof startRaw==='number'){try{const d=XLSX.SSF.parse_date_code(startRaw);if(d)startDate=`${d.m}/${d.d}/${d.y}`;}catch(e){}}
+      else if(startRaw)startDate=String(startRaw).trim();
       pts.push({
         n:`${fn} ${ln}`.trim(),d:ds,
         s:String(r[COL.source]||'').trim(),
@@ -571,7 +578,7 @@ function parseBuffer(buf){
         resp:String(r[COL.respite]||'').trim(),
         notes:String(r[COL.notes]||'').trim(),
         h:String(r[COL.hcpcs]||'').trim(),
-        startDate:String(r[COL.startDate]||'').trim(),
+        startDate:startDate,
         appt:apptStr,
         zip:String(r[COL.zip]||'').trim(),
         t:String(r[COL.tier]||'').trim(),
@@ -579,6 +586,22 @@ function parseBuffer(buf){
         followUp:followStr,
         c:String(r[COL.county]||'').trim(),
         l:String(r[COL.letter]||'').trim().replace(/\n/g,' '),
+        calls:[
+          {label:'August Calls', val:r[COL.augCalls]},
+          {label:'September Calls', val:r[COL.sepCalls]},
+          {label:'October Calls', val:r[COL.octCalls]},
+          {label:'November Calls', val:r[COL.novCalls]},
+          {label:'December Calls', val:r[COL.decCalls]},
+          {label:'Jan-26', val:r[COL.jan26]},
+          {label:'Feb-26', val:r[COL.feb26]},
+          {label:'Mar-26', val:r[COL.mar26]},
+        ].filter(c=>c.val!=null&&String(c.val).trim()!='').map(c=>{
+          let v=c.val;
+          if(v instanceof Date&&!isNaN(v))v=v.toLocaleDateString();
+          else if(typeof v==='number'){try{const d=XLSX.SSF.parse_date_code(v);if(d)v=`${d.m}/${d.d}/${d.y}`;}catch(e){}}
+          else v=String(v).trim();
+          return {label:c.label,date:v};
+        }),
       });
     }
     PATIENTS=pts;
@@ -900,7 +923,7 @@ function renderModalRows(){
   const rows=modalFiltered.map((p,i)=>{
     const isOpen=expandedRow===i;
     const arrow=`<span style="display:inline-block;transition:transform .2s;transform:rotate(${isOpen?90:0}deg);color:var(--muted);font-size:.6rem;margin-left:5px;">&#9654;</span>`;
-    const callLog=parseCallLog(p.notes);
+    const callLog=p.calls||[];
     const callLogHTML=callLog.length>0?`<div style="margin-top:12px;"><div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);font-weight:600;margin-bottom:6px;">&#128222; CALL LOG</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${callLog.map(cl=>`<span style="font-size:.68rem;padding:3px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--border);"><strong>${cl.label}:</strong> ${cl.date}</span>`).join('')}</div></div>`:'';
     const detail=isOpen?`<tr class="expand-row"><td colspan="9" style="padding:0 12px 10px 12px;background:var(--surface2);"><div style="padding:14px;background:var(--surface);border-radius:8px;border:1px solid var(--border);border-left:3px solid var(--green);">${p.notes?`<div style="margin-bottom:12px;"><div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--amber);font-weight:600;margin-bottom:5px;">&#128203; REMARKS</div><div style="font-size:.75rem;color:var(--text);line-height:1.5;">${p.notes}</div></div>`:''}
 <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;font-size:.7rem;">
@@ -910,6 +933,7 @@ function renderModalRows(){
 <div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">GENDER</div><div>${p.gen||'&#8212;'}</div></div>
 <div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">ZIP CODE</div><div>${p.zip||'&#8212;'}</div></div>
 <div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">MEDICARE ID</div><div style="color:var(--muted)">${p.mid||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">REFERRED TO</div><div>${p.rt||'&#8212;'}</div></div>
 <div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">RESPITE STATUS</div><div>${p.resp||'&#8212;'}</div></div>
 <div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">START DATE</div><div>${p.startDate||'&#8212;'}</div></div>
 <div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">FOLLOW UP DATE</div><div>${p.followUp||'&#8212;'}</div></div>
