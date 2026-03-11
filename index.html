@@ -640,29 +640,56 @@ function renderCharts(s) {
 function renderSrcTable() {
   const sources = [...new Set(PATIENTS.map(p=>p.s).filter(Boolean))];
   let data = sources.map(src => {
-    const pts = PATIENTS.filter(p => p.s===src && (currentMonth==='all'||(!p.d&&false)||(p.d&&p.d.startsWith(currentMonth))));
+    const pts = PATIENTS.filter(p => p.s===src && (currentMonth==='all'||(p.d&&p.d.startsWith(currentMonth))));
     return {source:src,total:pts.length,approved:pts.filter(p=>p.st==='Approved'&&p.l).length,submitted:pts.filter(p=>p.st==='Submitted To Medicare').length,scheduled:pts.filter(p=>p.st==='Scheduled').length};
   }).filter(d=>d.total>0);
-  if(currentMonth!=='all') data = data.filter(d=>d.total>0);
+
+  // Include patients with NO source so totals always match KPIs
+  const unassigned = PATIENTS.filter(p => !p.s && (currentMonth==='all'||(p.d&&p.d.startsWith(currentMonth))));
+  if (unassigned.length > 0) {
+    data.push({
+      source:'(No Source)',
+      total: unassigned.length,
+      approved: unassigned.filter(p=>p.st==='Approved'&&p.l).length,
+      submitted: unassigned.filter(p=>p.st==='Submitted To Medicare').length,
+      scheduled: unassigned.filter(p=>p.st==='Scheduled').length,
+      isUnassigned: true
+    });
+  }
   data.sort((a,b)=>b.total-a.total);
-  const origRank = Object.fromEntries(data.map((d,i)=>[d.source,i+1]));
-  data.sort((a,b)=>{const av=a[srcSortKey],bv=b[srcSortKey];if(typeof av==='string')return srcSortDir*av.localeCompare(bv);return srcSortDir*(av-bv);});
+  const origRank = Object.fromEntries(data.filter(d=>!d.isUnassigned).map((d,i)=>[d.source,i+1]));
+  data.sort((a,b)=>{
+    // Always keep unassigned at bottom
+    if(a.isUnassigned) return 1;
+    if(b.isUnassigned) return -1;
+    const av=a[srcSortKey],bv=b[srcSortKey];
+    if(typeof av==='string')return srcSortDir*av.localeCompare(bv);
+    return srcSortDir*(av-bv);
+  });
   document.querySelectorAll('.src-table .sortable').forEach(th=>{
     th.classList.remove('asc','desc');
     const k=th.getAttribute('onclick').match(/sortSrc\('(.+?)'\)/)?.[1];
     if(k===srcSortKey)th.classList.add(srcSortDir===1?'asc':'desc');
   });
-  const tT=data.reduce((s,d)=>s+d.total,0), tA=data.reduce((s,d)=>s+d.approved,0),
-    tS=data.reduce((s,d)=>s+d.submitted,0), tSc=data.reduce((s,d)=>s+d.scheduled,0);
-  const tR=tT>0?Math.round(tA/tT*100):0;
+  // TOTAL row uses ALL patients to match KPI exactly
+  const allFiltered = PATIENTS.filter(p => currentMonth==='all'||(p.d&&p.d.startsWith(currentMonth)));
+  const tT  = allFiltered.length;
+  const tA  = allFiltered.filter(p=>p.st==='Approved'&&p.l).length;
+  const tS  = allFiltered.filter(p=>p.st==='Submitted To Medicare').length;
+  const tSc = allFiltered.filter(p=>p.st==='Scheduled').length;
+  const tR  = tT>0?Math.round(tA/tT*100):0;
   const mx=Math.max(...data.map(d=>d.total),1);
   const rows = data.map((d,i)=>{
     const rate=d.total>0?Math.round(d.approved/d.total*100):0;
     const rc=rate>=50?'rate-h':rate>=25?'rate-m':'rate-l';
     const e=d.source.replace(/'/g,"\\'");
+    const srcDisplay = d.isUnassigned
+      ? `<span style="color:var(--muted);font-style:italic">${d.source}</span>`
+      : d.source;
+    const rankNum = d.isUnassigned ? '' : (origRank[d.source]||'');
     return `<tr>
-      <td style="color:var(--muted);font-size:.72rem">${origRank[d.source]||i+1}</td>
-      <td style="font-weight:500">${d.source}</td>
+      <td style="color:var(--muted);font-size:.72rem">${rankNum}</td>
+      <td style="font-weight:500">${srcDisplay}</td>
       <td class="r"><span class="cn w" onclick="openSourceModal('${e}','all')">${d.total}</span></td>
       <td class="r"><span class="cn g" onclick="openSourceModal('${e}','approved')">${d.approved}</span></td>
       <td class="r">${d.submitted>0?`<span class="cn a" onclick="openSourceModal('${e}','submitted')">${d.submitted}</span>`:'<span class="zero">—</span>'}</td>
