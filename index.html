@@ -926,21 +926,954 @@ function renderModalRows(){
     const callLog=p.calls||[];
     const callLogHTML=callLog.length>0?`<div style="margin-top:12px;"><div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);font-weight:600;margin-bottom:6px;">&#128222; CALL LOG</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${callLog.map(cl=>`<span style="font-size:.68rem;padding:3px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--border);"><strong>${cl.label}:</strong> ${cl.date}</span>`).join('')}</div></div>`:'';
     const detail=isOpen?`<tr class="expand-row"><td colspan="9" style="padding:0 12px 10px 12px;background:var(--surface2);"><div style="padding:14px;background:var(--surface);border-radius:8px;border:1px solid var(--border);border-left:3px solid ${p.st==='Approved'?'var(--green)':p.st==='Denied'?'var(--red)':p.st==='Submitted To Medicare'?'var(--amber)':'var(--blue)'};">${p.notes?`<div style="margin-bottom:12px;"><div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--amber);font-weight:600;margin-bottom:5px;">&#128203; REMARKS</div><div style="font-size:.75rem;color:var(--text);line-height:1.5;">${p.notes}</div></div>`:''}
-<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;font-size:.7rem;">
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">CAREGIVER</div><div>${p.cg||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">CAREGIVER PHONE</div><div>${p.cgc||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">CAREGIVER EMAIL</div><div>${p.cge||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">GENDER</div><div>${p.gen||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">ZIP CODE</div><div>${p.zip||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">MEDICARE ID</div><div style="color:var(--muted)">${p.mid||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">REFERRED TO</div><div>${p.rt||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">RESPITE STATUS</div><div>${p.resp||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">START DATE</div><div>${p.startDate||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">FOLLOW UP DATE</div><div>${p.followUp||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">APPROVAL LETTER</div><div>${p.l||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">HOME ASSESSMENT</div><div>${p.ha||'&#8212;'}</div></div>
-<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">APPT DATE</div><div>${p.appt||'&#8212;'}</div></div>
-</div>${callLogHTML}</div></td></tr>`:'';
+${(()=>{
+  const fld=(label,val,extra)=>{const v=(val==null)?'':(typeof val==='string'?val.trim():String(val));return(v&&v!=='—'&&v!=='-'&&v!=='--'&&v!=='N/A'&&v!=='n/a')?`<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">${label}</div><div ${extra||''}>${v}</div></div>`:''}DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Florida Medicare GUIDE Referrals Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--surface3:#21262d;
+  --border:#30363d;--border2:#21262d;
+  --text:#e6edf3;--muted:#7d8590;--muted2:#484f58;
+  --green:#3fb950;--green2:#238636;--green-dim:rgba(63,185,80,0.15);
+  --blue:#58a6ff;--blue-dim:rgba(88,166,255,0.15);
+  --amber:#d29922;--amber-dim:rgba(210,153,34,0.15);
+  --red:#f85149;--red-dim:rgba(248,81,73,0.15);
+  --purple:#bc8cff;--purple-dim:rgba(188,140,255,0.15);
+  --teal:#39d353;--cyan:#79c0ff;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+/* TOP BAR */
+#topBar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100;}
+.bar-title{font-size:0.85rem;font-weight:600;color:var(--text);white-space:nowrap;}
+.bar-spacer{flex:1;}
+.user-pill{display:none;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:0.75rem;}
+.user-pill.show{display:flex;}
+.uavatar{width:20px;height:20px;border-radius:50%;background:var(--green);color:#000;font-size:0.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.btn-ms{background:var(--green);border:none;border-radius:8px;padding:7px 16px;font-size:0.78rem;font-family:'Inter',sans-serif;font-weight:600;color:#000;cursor:pointer;display:flex;align-items:center;gap:7px;transition:opacity .15s;}
+.btn-ms:hover{opacity:.85;}
+.btn-ms:disabled{opacity:.4;cursor:not-allowed;}
+.btn-ghost{background:transparent;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:0.72rem;font-family:'Inter',sans-serif;color:var(--muted);cursor:pointer;transition:all .15s;}
+.btn-ghost:hover{border-color:var(--red);color:var(--red);}
+.btn-refresh{background:transparent;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:0.72rem;font-family:'Inter',sans-serif;color:var(--green);cursor:pointer;display:none;align-items:center;gap:5px;transition:all .15s;}
+.btn-refresh.show{display:flex;}
+.btn-refresh:hover{border-color:var(--green);}
+.btn-refresh:disabled{opacity:.4;cursor:not-allowed;}
+#lastRefresh{font-size:0.7rem;color:var(--muted);display:none;}
+#lastRefresh.show{display:block;}
+.status-badge{font-size:0.72rem;padding:4px 10px;border-radius:20px;display:none;}
+.status-badge.show{display:block;}
+.status-ok{background:var(--green-dim);color:var(--green);border:1px solid rgba(63,185,80,.3);}
+.status-err{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,81,73,.3);}
+
+/* FILE PICKER */
+#filePicker{display:none;padding:12px 24px;background:rgba(88,166,255,.06);border-bottom:1px solid rgba(88,166,255,.2);}
+#filePicker p{font-size:0.78rem;color:var(--blue);margin-bottom:8px;}
+.file-list{display:flex;flex-direction:column;gap:5px;max-height:140px;overflow-y:auto;}
+.file-item{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 12px;cursor:pointer;font-size:0.78rem;transition:all .15s;}
+.file-item:hover{border-color:var(--green);color:var(--green);}
+.file-item-path{font-size:0.68rem;color:var(--muted);margin-left:auto;}
+
+/* SIGN-IN STATE */
+#signInState{padding:80px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px;}
+.signin-icon{font-size:3rem;opacity:.2;}
+.signin-title{font-size:1.6rem;font-weight:700;color:var(--text);}
+.signin-sub{font-size:0.85rem;color:var(--muted);max-width:400px;line-height:1.6;}
+.sp-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:0.82rem;font-family:'Inter',sans-serif;color:var(--text);width:100%;max-width:520px;outline:none;transition:border-color .15s;}
+.sp-input:focus{border-color:var(--blue);}
+.btn-ms-big{background:var(--green);border:none;border-radius:10px;padding:12px 28px;font-size:0.9rem;font-family:'Inter',sans-serif;font-weight:600;color:#000;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .2s;}
+.btn-ms-big:hover{opacity:.85;}
+.signin-note{font-size:0.7rem;color:var(--muted);max-width:360px;line-height:1.5;}
+
+/* MAIN */
+#mainContent{padding:24px;display:none;}
+#mainContent.visible{display:block;}
+
+/* HEADER */
+.dash-header{margin-bottom:20px;}
+.dash-header h1{font-size:1.75rem;font-weight:700;color:var(--text);line-height:1.2;}
+.dash-header h1 em{color:var(--green);font-style:italic;}
+.dash-meta-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:6px;}
+.dash-subtitle{font-size:0.8rem;color:var(--muted);}
+.meta-pills{display:flex;gap:8px;flex-wrap:wrap;}
+.meta-pill{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:0.72rem;color:var(--muted);}
+.meta-pill strong{color:var(--text);font-weight:600;margin-left:4px;}
+
+/* INFO BANNER */
+.info-banner{background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.25);border-radius:8px;padding:10px 16px;font-size:0.78rem;color:var(--blue);margin-bottom:20px;line-height:1.5;}
+.info-banner u{cursor:pointer;text-decoration-style:dotted;}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 16px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s;}
+.kpi:hover{border-color:var(--green);transform:translateY(-2px);}
+.kpi::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi:nth-child(1)::after{background:var(--green);}
+.kpi:nth-child(2)::after{background:var(--blue);}
+.kpi:nth-child(3)::after{background:var(--amber);}
+.kpi:nth-child(4)::after{background:var(--red);}
+.kpi:nth-child(5)::after{background:var(--purple);}
+.kpi:nth-child(6)::after{background:#39d353;}
+.kpi-label{font-size:0.67rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;margin-bottom:10px;}
+.kpi-value{font-size:2rem;font-weight:700;color:var(--text);line-height:1;margin-bottom:6px;}
+.kpi-sub{font-size:0.72rem;color:var(--muted);margin-bottom:8px;line-height:1.4;}
+.kpi-badge{display:inline-block;font-size:0.67rem;padding:2px 8px;border-radius:20px;font-weight:600;border:1px solid;}
+.kpi-badge.green{background:var(--green-dim);color:var(--green);border-color:rgba(63,185,80,.4);}
+.kpi-badge.blue{background:var(--blue-dim);color:var(--blue);border-color:rgba(88,166,255,.4);}
+.kpi-badge.amber{background:var(--amber-dim);color:var(--amber);border-color:rgba(210,153,34,.4);}
+.kpi-badge.red{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.4);}
+.kpi-badge.purple{background:var(--purple-dim);color:var(--purple);border-color:rgba(188,140,255,.4);}
+.kpi-badge.teal{background:rgba(57,211,83,.12);color:#39d353;border-color:rgba(57,211,83,.4);}
+.kpi-hint{font-size:0.65rem;color:var(--muted2);margin-top:6px;}
+.kpi:hover .kpi-hint{color:var(--green);}
+.kpi-top-name{font-size:1.1rem;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:4px;}
+.kpi-top-sub{font-size:0.7rem;color:var(--muted);margin-bottom:6px;}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:20px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;}
+.chart-title{font-size:0.95rem;font-weight:600;color:var(--text);margin-bottom:4px;}
+.chart-sub{font-size:0.72rem;color:var(--muted);margin-bottom:16px;}
+.chart-sub a{color:var(--green);cursor:pointer;text-decoration:none;}
+.chart-wrap{position:relative;height:230px;}
+
+/* SOURCE TABLE */
+.src-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.src-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;}
+.src-head-left .src-title{font-size:1rem;font-weight:600;color:var(--text);margin-bottom:3px;}
+.src-head-left .src-sub{font-size:0.72rem;color:var(--muted);}
+.month-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.month-lbl{font-size:0.72rem;color:var(--muted);margin-right:2px;}
+.mbtn{background:transparent;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:0.72rem;font-family:'Inter',sans-serif;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.mbtn:hover{border-color:var(--green);color:var(--green);}
+.mbtn.active{background:transparent;border-color:var(--green);color:var(--green);}
+.src-legend{display:flex;gap:16px;padding:10px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.lgitem{display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted);}
+.ldot{width:7px;height:7px;border-radius:50%;}
+table{width:100%;border-collapse:collapse;}
+.src-table thead tr{background:var(--surface2);}
+th{font-size:0.64rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:9px 14px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border);}
+th.r,td.r{text-align:right;}
+td{padding:9px 14px;font-size:0.8rem;border-bottom:1px solid var(--border2);color:var(--text);vertical-align:middle;}
+.src-table tbody tr:last-child td{border-bottom:none;}
+.src-table tbody tr:hover td{background:rgba(255,255,255,.02);}
+.src-table tbody tr.total-row td{background:var(--surface2);font-weight:600;border-top:1px solid var(--border);}
+.sortable{cursor:pointer;user-select:none;}
+.sortable:hover{color:var(--blue);}
+.sort-icon{opacity:.35;margin-left:2px;font-size:0.6rem;}
+.sortable.asc .sort-icon,.sortable.desc .sort-icon{opacity:1;color:var(--green);}
+.cn{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;}
+.cn.g{color:var(--green);}.cn.g:hover{opacity:.8;}
+.cn.a{color:var(--amber);}.cn.a:hover{opacity:.8;}
+.cn.b{color:var(--blue);}.cn.b:hover{opacity:.8;}
+.cn.w{color:var(--text);}.cn.w:hover{color:var(--green);}
+.zero{color:var(--muted2);}
+.vol-bar-wrap{min-width:100px;max-width:150px;}
+.vol-bar-bg{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;}
+.vol-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#238636,#3fb950);}
+.rate-val{font-weight:600;}
+.rate-h{color:var(--green);}
+.rate-m{color:var(--amber);}
+.rate-l{color:var(--red);}
+.tscroll{max-height:520px;overflow-y:auto;}
+.tscroll::-webkit-scrollbar{width:4px;}
+.tscroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px;}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:1100px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.8);}
+.mhead{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-shrink:0;}
+.mtitle{font-size:1.05rem;font-weight:600;color:var(--text);}
+.mmeta{font-size:0.72rem;color:var(--muted);margin-top:3px;}
+.mclose{background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;cursor:pointer;color:var(--muted);font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.mclose:hover{border-color:var(--red);color:var(--red);}
+.mbody{overflow-y:auto;flex:1;}
+.mbody::-webkit-scrollbar{width:4px;}
+.mbody::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.mtable{width:100%;border-collapse:collapse;}
+.mtable thead tr{background:var(--surface2);position:sticky;top:0;z-index:1;}
+.mtable th{font-size:0.62rem;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:9px 12px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border);}
+.mtable td{padding:9px 12px;font-size:0.77rem;border-bottom:1px solid var(--border2);color:var(--text);vertical-align:top;}
+.mtable tbody tr:hover td{background:rgba(255,255,255,.02);}
+.patient-row:hover td{background:rgba(255,255,255,.04) !important;}
+.patient-row.row-open td{background:rgba(255,255,255,.03);}
+.expand-row td{padding:0 !important;background:var(--surface2) !important;}
+.sbadge{display:inline-block;font-size:0.64rem;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;border:1px solid;}
+.sa{background:var(--green-dim);color:var(--green);border-color:rgba(63,185,80,.4);}
+.sd{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.4);}
+.ss{background:var(--amber-dim);color:var(--amber);border-color:rgba(210,153,34,.4);}
+.sc{background:var(--blue-dim);color:var(--blue);border-color:rgba(88,166,255,.4);}
+.so{background:rgba(125,133,144,.1);color:var(--muted);border-color:rgba(125,133,144,.3);}
+.notes-cell{max-width:200px;font-size:0.72rem;color:var(--muted);white-space:pre-wrap;word-break:break-word;line-height:1.4;}
+.notes-cell.has-notes{color:var(--text);}
+.mempty{padding:40px;text-align:center;color:var(--muted);font-size:.82rem;}
+.mfilter-row td{padding:5px 6px;background:var(--surface2);}
+.mpill{font-size:.72rem;padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s;}
+.mpill:hover{border-color:var(--blue);color:var(--text);}
+.mpill.active{background:var(--green-dim);border-color:var(--green);color:var(--green);font-weight:600;}
+.col-filter{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:0.7rem;font-family:'Inter',sans-serif;color:var(--text);width:100%;outline:none;transition:border-color .15s;}
+.col-filter:focus{border-color:var(--blue);}
+select.col-filter{cursor:pointer;}
+.clear-btn{background:var(--red-dim);border:1px solid rgba(248,81,73,.3);border-radius:20px;padding:2px 10px;font-size:.68rem;font-family:'Inter',sans-serif;color:var(--red);cursor:pointer;}
+.mfoot{padding:10px 20px;border-top:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center;background:var(--surface2);font-size:.7rem;color:var(--muted);}
+.mfoot span{color:var(--text);font-weight:600;}
+
+/* LOADING */
+#loadingOverlay{position:fixed;inset:0;background:rgba(13,17,23,.9);backdrop-filter:blur(6px);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+#loadingOverlay.show{display:flex;}
+.spinner{width:32px;height:32px;border:2.5px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-msg{font-size:.8rem;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topBar">
+  <span class="bar-title">Florida Medicare GUIDE · Referrals</span>
+  <div class="bar-spacer"></div>
+  <span class="status-badge" id="statusBadge"></span>
+  <span id="lastRefresh"></span>
+  <button class="btn-refresh" id="btnRefresh" onclick="refreshData()">↻ Refresh</button>
+  <div class="user-pill" id="userPill">
+    <div class="uavatar" id="userAvatar">?</div>
+    <span id="userName">—</span>
+  </div>
+  <button class="btn-ghost" id="btnSignOut" style="display:none" onclick="signOut()">Sign out</button>
+  <button class="btn-ms" id="btnSignIn" onclick="signIn()">
+    <svg width="16" height="16" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+    Sign in with Microsoft
+  </button>
+</div>
+
+<!-- FILE PICKER -->
+<div id="filePicker">
+  <p>📂 Multiple files found — pick one:</p>
+  <div class="file-list" id="fileList"></div>
+</div>
+
+<!-- SIGN-IN STATE -->
+<div id="signInState">
+  <div class="signin-icon">🔐</div>
+  <div class="signin-title">Florida Medicare GUIDE Dashboard</div>
+  <div class="signin-sub">Sign in with your MedBetterHealth.org account, then paste the SharePoint link to load live data.</div>
+  <input class="sp-input" id="spUrlInput" type="text" placeholder="Paste SharePoint share link to Guide Master List.xlsx…" oninput="saveUrl(this.value)">
+  <button class="btn-ms-big" onclick="signIn()">
+    <svg width="18" height="18" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+    Sign in with Microsoft
+  </button>
+  <div class="signin-note">The SharePoint link is saved automatically. After first sign-in, data loads silently on every visit.</div>
+</div>
+
+<!-- MAIN DASHBOARD -->
+<div id="mainContent">
+  <div class="dash-header">
+    <h1>Florida Referrals <em>Dashboard</em></h1>
+    <div class="dash-meta-row">
+      <div class="dash-subtitle" id="dashSubtitle">Medicare GUIDE Program · Loading…</div>
+      <div class="meta-pills">
+        <div class="meta-pill">Data Source<strong>Florida Referrals Tab</strong></div>
+        <div class="meta-pill">Last Updated<strong id="lastUpdatedPill">—</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-banner">
+    ℹ️ <strong>Drill-down enabled:</strong> Click any <u onclick="void(0)">underlined number</u> in the source table to view the individual patients behind that figure. Filter by status inside the modal.
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi" onclick="openModal('all')">
+      <div class="kpi-label">Total Referrals</div>
+      <div class="kpi-value" id="kpiTotal">—</div>
+      <div class="kpi-sub">All records on file</div>
+      <span class="kpi-badge green" id="kpiDateRange">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+    <div class="kpi" onclick="openModal('approved')">
+      <div class="kpi-label">Total Approved</div>
+      <div class="kpi-value" id="kpiApproved">—</div>
+      <div class="kpi-sub" id="kpiApprSub">Out of — referrals</div>
+      <span class="kpi-badge blue" id="kpiApprRate">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+    <div class="kpi" onclick="openModal('submitted')">
+      <div class="kpi-label">Submitted to Medicare</div>
+      <div class="kpi-value" id="kpiSubmitted">—</div>
+      <div class="kpi-sub">Pending Medicare decision</div>
+      <span class="kpi-badge amber" id="kpiSubmPct">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+    <div class="kpi" onclick="openModal('scheduled')">
+      <div class="kpi-label">Scheduled</div>
+      <div class="kpi-value" id="kpiScheduled">—</div>
+      <div class="kpi-sub">Awaiting appointment</div>
+      <span class="kpi-badge red" id="kpiSchedPct">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+    <div class="kpi" onclick="openBestMonthModal()">
+      <div class="kpi-label">Best Month</div>
+      <div class="kpi-value" id="kpiBestMonth">—</div>
+      <div class="kpi-sub" id="kpiBestSub">— referrals · — approved</div>
+      <span class="kpi-badge purple" id="kpiBestRate">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+    <div class="kpi" onclick="openTopSourceModal()">
+      <div class="kpi-label">Top Source</div>
+      <div class="kpi-top-name" id="kpiTopName">—</div>
+      <div class="kpi-top-sub" id="kpiTopSub">— referrals · — approved</div>
+      <span class="kpi-badge teal" id="kpiTopRate">—</span>
+      <div class="kpi-hint">↗ Click to explore</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Monthly Referrals &amp; Approvals</div>
+      <div class="chart-sub">Total referrals vs. approved per month — <a onclick="void(0)">click any bar to drill in</a></div>
+      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Approval Rate by Month</div>
+      <div class="chart-sub">% of referrals approved — <a onclick="void(0)">click any point to drill in</a></div>
+      <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="src-card">
+    <div class="src-head">
+      <div class="src-head-left">
+        <div class="src-title">Referring Sources Performance</div>
+        <div class="src-sub">Click any underlined number to see individual patient records</div>
+      </div>
+      <div class="month-row">
+        <span class="month-lbl">Month:</span>
+        <button class="mbtn active" onclick="filterMonth('all',this)">All Time</button>
+        <span id="monthBtns"></span>
+      </div>
+    </div>
+    <div class="src-legend">
+      <div class="lgitem"><div class="ldot" style="background:var(--green)"></div>Approved = confirmed by Medicare</div>
+      <div class="lgitem"><div class="ldot" style="background:var(--amber)"></div>Submitted = sent to Medicare, awaiting decision</div>
+      <div class="lgitem"><div class="ldot" style="background:var(--blue)"></div>Approval Rate = Approved ÷ Total Referrals</div>
+    </div>
+    <div class="tscroll">
+      <table class="src-table">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th class="sortable" onclick="sortSrc('source')">Referring Source <span class="sort-icon">↕</span></th>
+            <th class="r sortable" onclick="sortSrc('total')">Referrals <span class="sort-icon">↑</span></th>
+            <th class="r sortable" onclick="sortSrc('approved')">Approved <span class="sort-icon">↕</span></th>
+            <th class="r sortable" onclick="sortSrc('submitted')">Submitted <span class="sort-icon">↕</span></th>
+            <th class="r sortable" onclick="sortSrc('scheduled')">Scheduled <span class="sort-icon">↕</span></th>
+            <th class="r sortable" onclick="sortSrc('rate')">Approval Rate <span class="sort-icon">↕</span></th>
+            <th>Volume</th>
+          </tr>
+        </thead>
+        <tbody id="srcBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="mhead">
+      <div>
+        <div class="mtitle" id="modalTitle">Patient List</div>
+        <div class="mmeta" id="modalMeta"></div>
+      </div>
+      <button class="mclose" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mpills" id="modalPills" style="padding:10px 20px 8px;display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface);"></div>
+    <div class="mfilterbar" style="padding:6px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;">
+      <input class="col-filter" id="cf-n" placeholder="Search name…" oninput="applyFilters()" style="flex:2;min-width:120px;">
+      <input class="col-filter" id="cf-s" placeholder="Search source…" oninput="applyFilters()" style="flex:2;min-width:120px;">
+      <select class="col-filter" id="cf-st" onchange="applyFilters()" style="flex:1.5;min-width:120px;">
+        <option value="">All statuses</option>
+        <option>Approved</option><option>Denied</option>
+        <option>Submitted To Medicare</option><option>Scheduled</option>
+        <option>No Dementia</option><option>Dementia Eligible</option>
+        <option>Medicare Eligible</option><option>CN Virtual Visit</option>
+        <option>Care Plan Complete</option><option>Education</option>
+        <option>Bill For 99483</option><option>Home Visit</option>
+        <option>Bill for Guide</option>
+      </select>
+      <input class="col-filter" id="cf-d" placeholder="e.g. 2/2026" oninput="applyFilters()" style="flex:1;min-width:90px;">
+      <input class="col-filter" id="cf-dob" placeholder="Search DOB…" oninput="applyFilters()" style="flex:1;min-width:90px;">
+      <input class="col-filter" id="cf-c" placeholder="Search county…" oninput="applyFilters()" style="flex:1.5;min-width:100px;">
+      <select class="col-filter" id="cf-t" onchange="applyFilters()" style="flex:1;min-width:80px;">
+        <option value="">All tiers</option>
+        <option>High</option><option>Medium</option><option>Low</option>
+      </select>
+      <button class="clear-btn" onclick="clearFilters()">✕ Clear filters</button>
+    </div>
+    <div class="mbody">
+      <table class="mtable">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th class="sortable" onclick="sortModal('n')">Patient Name <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('s')">Source <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('st')">Status <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('d')">Referral Date <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('dob')">Date of Birth <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('c')">County <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('t')">Tier <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('h')">HCPCS <span class="sort-icon">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="modalBody"></tbody>
+      </table>
+      <div id="modalEmpty" class="mempty" style="display:none">No patients match the current filters.</div>
+    </div>
+    <div class="mfoot">
+      <div>Showing <span id="modalCount">0</span> of <span id="modalTotal">0</span> patients</div>
+      <div id="modalStats"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-msg" id="loadingMsg">Loading…</div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────
+const CLIENT_ID  = 'a356d39c-39d7-4b53-b73b-63e630d6fc17';
+const TENANT_ID  = 'c4057d88-bc8a-4772-903d-e21ab2c65e4c';
+const SCOPES     = ['Files.Read','Sites.Read.All'];
+const FILE_NAME  = 'Guide Master List.xlsx';
+const SHEET_NAME = 'Florida Referrals';
+const COL = {
+  date:0, firstName:1, lastName:2, source:3, referredTo:4,
+  dob:5, medicareId:6, gender:7, caregiver:8, caregiverContact:9, caregiverEmail:10,
+  status:11, respite:12, notes:13, hcpcs:14, startDate:15, apptDate:16,
+  augCalls:17, sepCalls:18, octCalls:19, novCalls:20, decCalls:21,
+  jan26:22, feb26:23, mar26:24,
+  zip:25, tier:26, homeAssess:27, followUp:28, county:29, letter:30
+};
+
+// ── MSAL ──────────────────────────────────────────────────
+let msalApp=null, currentAccount=null, bootReady=null;
+let PATIENTS=[], barChart=null, lineChart=null;
+let srcSortKey='total', srcSortDir=-1, currentMonth='all';
+let modalPatients=[], modalFiltered=[], modalSortKey='d', modalSortDir=-1;
+let _bestMonthKey='', _topSource='';
+
+async function boot() {
+  bootReady=(async()=>{
+    msalApp=new msal.PublicClientApplication({
+      auth:{clientId:CLIENT_ID,authority:'https://login.microsoftonline.com/'+TENANT_ID,redirectUri:window.location.href.split('#')[0].split('?')[0]},
+      cache:{cacheLocation:'localStorage',storeAuthStateInCookie:true}
+    });
+    await msalApp.initialize();
+    try{await msalApp.handleRedirectPromise();}catch(e){}
+    const accounts=msalApp.getAllAccounts();
+    if(accounts.length>0){currentAccount=accounts[0];onSignedIn();}
+  })();
+  await bootReady;
+  const saved=getSavedUrl();
+  if(saved){const inp=document.getElementById('spUrlInput');if(inp)inp.value=saved;}
+}
+
+async function signIn(){
+  try{
+    document.getElementById('btnSignIn').disabled=true;
+    if(bootReady)await bootReady;
+    const res=await msalApp.loginPopup({scopes:SCOPES,prompt:'select_account'});
+    currentAccount=res.account;onSignedIn();
+  }catch(e){
+    document.getElementById('btnSignIn').disabled=false;
+    if(!e.message.includes('user_cancelled'))setStatus('Sign-in failed: '+e.message,'err');
+  }
+}
+function signOut(){
+  msalApp.logoutPopup({account:currentAccount});currentAccount=null;
+  document.getElementById('userPill').classList.remove('show');
+  document.getElementById('btnSignOut').style.display='none';
+  document.getElementById('btnRefresh').classList.remove('show');
+  document.getElementById('btnSignIn').style.display='';
+  document.getElementById('btnSignIn').disabled=false;
+  document.getElementById('mainContent').classList.remove('visible');
+  document.getElementById('signInState').style.display='';
+  document.getElementById('filePicker').style.display='none';
+  document.getElementById('lastRefresh').classList.remove('show');
+  clearStatus();
+}
+async function onSignedIn(){
+  const name=currentAccount.name||currentAccount.username;
+  document.getElementById('userAvatar').textContent=name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('userName').textContent=name;
+  document.getElementById('userPill').classList.add('show');
+  document.getElementById('btnSignOut').style.display='';
+  document.getElementById('btnSignIn').style.display='none';
+  document.getElementById('signInState').style.display='none';
+  await fetchExcel();
+}
+async function getToken(){
+  try{const r=await msalApp.acquireTokenSilent({scopes:SCOPES,account:currentAccount});return r.accessToken;}
+  catch(e){const r=await msalApp.acquireTokenPopup({scopes:SCOPES});return r.accessToken;}
+}
+function saveUrl(val){try{localStorage.setItem('sp_file_url',val.trim());}catch(e){}}
+function getSavedUrl(){try{return localStorage.getItem('sp_file_url')||'';}catch(e){return '';}}
+async function fetchExcel(){
+  const shareUrl=getSavedUrl();
+  if(!shareUrl){setStatus('Paste your SharePoint file link first.','err');document.getElementById('signInState').style.display='';document.getElementById('mainContent').classList.remove('visible');return;}
+  showLoading('Fetching file from SharePoint…');
+  try{
+    const token=await getToken();
+    const encoded=btoa(shareUrl).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    const r=await fetch(`https://graph.microsoft.com/v1.0/shares/u!${encoded}/driveItem`,{headers:{'Authorization':'Bearer '+token}});
+    if(!r.ok){const err=await r.json();throw new Error((err.error&&err.error.message)||r.statusText);}
+    const item=await r.json();hideLoading();await downloadFile(item,token);
+  }catch(e){hideLoading();setStatus('Error: '+e.message,'err');}
+}
+async function downloadFile(item,token){
+  showLoading('Downloading '+item.name+'…');
+  try{
+    const dlUrl=item['@microsoft.graph.downloadUrl'];let buf;
+    if(dlUrl){buf=await(await fetch(dlUrl)).arrayBuffer();}
+    else{const driveId=item.parentReference&&item.parentReference.driveId;const url=driveId?`https://graph.microsoft.com/v1.0/drives/${driveId}/items/${item.id}/content`:`https://graph.microsoft.com/v1.0/me/drive/items/${item.id}/content`;buf=await(await fetch(url,{headers:{'Authorization':'Bearer '+(await getToken())}})).arrayBuffer();}
+    hideLoading();parseBuffer(buf,item.name);
+  }catch(e){hideLoading();setStatus('Download failed: '+e.message,'err');}
+}
+function showFilePicker(items,token){
+  window._pickerItems=items;window._pickerToken=token;
+  document.getElementById('fileList').innerHTML=items.map((item,i)=>`<div class="file-item" onclick="pickFile(${i})"><span>📄</span><span>${item.name}</span><span class="file-item-path">${((item.parentReference||{}).path||'').replace('/drive/root:','')}</span></div>`).join('');
+  document.getElementById('filePicker').style.display='block';
+}
+window.pickFile=async(i)=>{document.getElementById('filePicker').style.display='none';await downloadFile(window._pickerItems[i],window._pickerToken);};
+async function refreshData(){document.getElementById('btnRefresh').disabled=true;await fetchExcel();document.getElementById('btnRefresh').disabled=false;}
+
+// ── PARSE ─────────────────────────────────────────────────
+function parseBuffer(buf){
+  try{
+    const wb=XLSX.read(buf,{type:'array',cellDates:true});
+    if(!wb.SheetNames.includes(SHEET_NAME)){setStatus(`Sheet "${SHEET_NAME}" not found.`,'err');return;}
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[SHEET_NAME],{header:1,defval:''});
+    const pts=[];
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];
+      const fn=String(r[COL.firstName]||'').trim();
+      const ln=String(r[COL.lastName]||'').trim();
+      if(!fn&&!ln)continue;
+      let ds='';
+      const rd=r[COL.date];
+      if(rd instanceof Date&&!isNaN(rd))ds=rd.toISOString().slice(0,10);
+      else if(typeof rd==='number'){try{const d=XLSX.SSF.parse_date_code(rd);if(d)ds=`${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;}catch(e){}}
+      let dobStr='';
+      const dobRaw=r[COL.dob];
+      if(dobRaw instanceof Date&&!isNaN(dobRaw))dobStr=dobRaw.toLocaleDateString();
+      else if(dobRaw)dobStr=String(dobRaw).trim();
+      let apptStr='';
+      const apptRaw=r[COL.apptDate];
+      if(apptRaw instanceof Date&&!isNaN(apptRaw))apptStr=apptRaw.toLocaleString();
+      else if(apptRaw)apptStr=String(apptRaw).trim();
+      let followStr='';
+      const followRaw=r[COL.followUp];
+      if(followRaw instanceof Date&&!isNaN(followRaw))followStr=followRaw.toLocaleDateString();
+      else if(followRaw)followStr=String(followRaw).trim();
+      let startDate='';
+      const startRaw=r[COL.startDate];
+      if(startRaw instanceof Date&&!isNaN(startRaw))startDate=startRaw.toLocaleDateString();
+      else if(typeof startRaw==='number'){try{const d=XLSX.SSF.parse_date_code(startRaw);if(d)startDate=`${d.m}/${d.d}/${d.y}`;}catch(e){}}
+      else if(startRaw)startDate=String(startRaw).trim();
+      pts.push({
+        n:`${fn} ${ln}`.trim(),d:ds,
+        s:String(r[COL.source]||'').trim(),
+        rt:String(r[COL.referredTo]||'').trim(),
+        dob:dobStr,
+        mid:String(r[COL.medicareId]||'').trim(),
+        gen:String(r[COL.gender]||'').trim(),
+        cg:String(r[COL.caregiver]||'').trim(),
+        cgc:String(r[COL.caregiverContact]||'').trim(),
+        cge:String(r[COL.caregiverEmail]||'').trim(),
+        st:String(r[COL.status]||'').trim(),
+        resp:String(r[COL.respite]||'').trim(),
+        notes:String(r[COL.notes]||'').trim(),
+        h:String(r[COL.hcpcs]||'').trim(),
+        startDate:startDate,
+        appt:apptStr,
+        zip:String(r[COL.zip]||'').trim(),
+        t:String(r[COL.tier]||'').trim(),
+        ha:String(r[COL.homeAssess]||'').trim(),
+        followUp:followStr,
+        c:String(r[COL.county]||'').trim(),
+        l:String(r[COL.letter]||'').trim().replace(/\n/g,' '),
+        calls:[
+          {label:'August Calls', val:r[COL.augCalls]},
+          {label:'September Calls', val:r[COL.sepCalls]},
+          {label:'October Calls', val:r[COL.octCalls]},
+          {label:'November Calls', val:r[COL.novCalls]},
+          {label:'December Calls', val:r[COL.decCalls]},
+          {label:'Jan-26', val:r[COL.jan26]},
+          {label:'Feb-26', val:r[COL.feb26]},
+          {label:'Mar-26', val:r[COL.mar26]},
+        ].filter(c=>c.val!=null&&String(c.val).trim()!='').map(c=>{
+          let v=c.val;
+          if(v instanceof Date&&!isNaN(v))v=v.toLocaleDateString();
+          else if(typeof v==='number'){try{const d=XLSX.SSF.parse_date_code(v);if(d)v=`${d.m}/${d.d}/${d.y}`;}catch(e){}}
+          else v=String(v).trim();
+          return {label:c.label,date:v};
+        }),
+      });
+    }
+    PATIENTS=pts;
+    const now=new Date();
+    const lr=document.getElementById('lastRefresh');
+    lr.textContent=`Updated ${now.toLocaleDateString([],{month:'short',day:'numeric'})} ${now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+    lr.classList.add('show');
+    document.getElementById('lastUpdatedPill').textContent=now.toLocaleDateString([],{month:'short',year:'numeric'});
+    document.getElementById('btnRefresh').classList.add('show');
+    renderDashboard();
+    setStatus(`✓ ${pts.length} records loaded`,'ok');
+  }catch(e){setStatus('Parse error: '+e.message,'err');}
+}
+
+// ── STATS ─────────────────────────────────────────────────
+function computeStats(){
+  const total=PATIENTS.length;
+  const approved=PATIENTS.filter(p=>p.st==='Approved'&&p.l).length;
+  const submitted=PATIENTS.filter(p=>p.st==='Submitted To Medicare').length;
+  const scheduled=PATIENTS.filter(p=>p.st==='Scheduled').length;
+  const monthMap={};
+  PATIENTS.forEach(p=>{
+    if(!p.d)return;
+    const mk=p.d.slice(0,7);
+    if(!monthMap[mk])monthMap[mk]={total:0,approved:0};
+    monthMap[mk].total++;
+    if(p.st==='Approved'&&p.l)monthMap[mk].approved++;
+  });
+  const mks=Object.keys(monthMap).sort();
+  const mlbl=mks.map(k=>{const[y,m]=k.split('-');return new Date(+y,+m-1,1).toLocaleString('default',{month:'short'})+" '"+String(y).slice(2);});
+  // Best month by referral count
+  let bestMk='',bestTotal=0;
+  mks.forEach(k=>{if(monthMap[k].total>bestTotal){bestTotal=monthMap[k].total;bestMk=k;}});
+  _bestMonthKey=bestMk;
+  const bestAppr=bestMk?monthMap[bestMk].approved:0;
+  const bestRate=bestTotal>0?Math.round(bestAppr/bestTotal*100):0;
+  const bestLabel=bestMk?mlbl[mks.indexOf(bestMk)]:'—';
+  // Top source by approved count
+  const srcMap={};
+  PATIENTS.forEach(p=>{
+    if(!p.s)return;
+    if(!srcMap[p.s])srcMap[p.s]={total:0,approved:0};
+    srcMap[p.s].total++;
+    if(p.st==='Approved'&&p.l)srcMap[p.s].approved++;
+  });
+  let topSrc='',topApproved=0;
+  Object.entries(srcMap).forEach(([s,v])=>{if(v.approved>topApproved){topApproved=v.approved;topSrc=s;}});
+  _topSource=topSrc;
+  const topTotal=topSrc?srcMap[topSrc].total:0;
+  const topRate=topTotal>0?Math.round(topApproved/topTotal*100):0;
+  return{total,approved,submitted,scheduled,
+    monthKeys:mks,monthLabels:mlbl,
+    monthTotal:mks.map(k=>monthMap[k].total),
+    monthAppr:mks.map(k=>monthMap[k].approved),
+    monthRate:mks.map(k=>monthMap[k].total>0?Math.round(monthMap[k].approved/monthMap[k].total*100):0),
+    rangeStr:mlbl.length>0?`${mlbl[0]} – ${mlbl[mlbl.length-1]}`:'—',
+    datedCount:PATIENTS.filter(p=>p.d).length,
+    bestLabel,bestTotal,bestAppr,bestRate,
+    topSrc,topTotal,topApproved,topRate
+  };
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function renderDashboard(){
+  const s=computeStats();
+  document.getElementById('signInState').style.display='none';
+  document.getElementById('mainContent').classList.add('visible');
+  document.getElementById('dashSubtitle').textContent=`Medicare GUIDE Program · ${s.rangeStr} · ${s.total} total referrals`;
+  document.getElementById('kpiTotal').textContent=s.total;
+  document.getElementById('kpiDateRange').textContent=s.rangeStr;
+  document.getElementById('kpiApproved').textContent=s.approved;
+  document.getElementById('kpiApprSub').textContent=`Out of ${s.total} referrals`;
+  document.getElementById('kpiApprRate').textContent=s.total>0?(Math.round(s.approved/s.total*100)+'% approval rate'):'—';
+  document.getElementById('kpiSubmitted').textContent=s.submitted;
+  document.getElementById('kpiSubmPct').textContent=s.total>0?(Math.round(s.submitted/s.total*100)+'% of referrals'):'—';
+  document.getElementById('kpiScheduled').textContent=s.scheduled;
+  document.getElementById('kpiSchedPct').textContent=s.total>0?(Math.round(s.scheduled/s.total*100)+'% of referrals'):'—';
+  document.getElementById('kpiBestMonth').textContent=s.bestLabel;
+  document.getElementById('kpiBestSub').textContent=`${s.bestTotal} referrals · ${s.bestAppr} approved`;
+  document.getElementById('kpiBestRate').textContent=s.bestRate+'% monthly rate';
+  document.getElementById('kpiTopName').textContent=s.topSrc||'—';
+  document.getElementById('kpiTopSub').textContent=`${s.topTotal} referrals · ${s.topApproved} approved`;
+  document.getElementById('kpiTopRate').textContent=s.topRate+'% approval rate';
+  document.getElementById('monthBtns').innerHTML=s.monthKeys.map((k,i)=>`<button class="mbtn" onclick="filterMonth('${k}',this)">${s.monthLabels[i].split(' ')[0]}</button>`).join('');
+  renderCharts(s);
+  currentMonth='all';
+  renderSrcTable();
+}
+
+// ── CHARTS ────────────────────────────────────────────────
+const CHART_DEFAULTS={
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c2128',borderColor:'#30363d',borderWidth:1,titleColor:'#e6edf3',bodyColor:'#7d8590',padding:10}},
+  scales:{x:{grid:{color:'rgba(48,54,61,.6)'},ticks:{color:'#7d8590',font:{size:11}}},y:{grid:{color:'rgba(48,54,61,.6)'},ticks:{color:'#7d8590',font:{size:11}}}}
+};
+function renderCharts(s){
+  if(barChart){barChart.destroy();barChart=null;}
+  if(lineChart){lineChart.destroy();lineChart=null;}
+  barChart=new Chart(document.getElementById('barChart'),{type:'bar',data:{labels:s.monthLabels,datasets:[
+    {label:'Total Referrals',data:s.monthTotal,backgroundColor:'rgba(56,97,151,0.7)',borderColor:'#3861a3',borderWidth:1,borderRadius:3},
+    {label:'Approved',data:s.monthAppr,backgroundColor:'rgba(63,185,80,0.75)',borderColor:'#3fb950',borderWidth:1,borderRadius:3}
+  ]},options:{...CHART_DEFAULTS,responsive:true,maintainAspectRatio:false,
+    plugins:{...CHART_DEFAULTS.plugins,legend:{display:true,labels:{color:'#7d8590',font:{size:11},boxWidth:10,padding:14}}},
+    onClick:(e,els)=>{if(els.length)openMonthModal(s.monthKeys[els[0].index],s.monthLabels[els[0].index]);}}});
+  lineChart=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:s.monthLabels,datasets:[{
+    label:'Approval Rate %',data:s.monthRate,borderColor:'#3fb950',backgroundColor:'rgba(63,185,80,0.08)',
+    borderWidth:2,pointBackgroundColor:'#3fb950',pointBorderColor:'#0d1117',pointBorderWidth:2,pointRadius:5,tension:0.4,fill:true
+  }]},options:{...CHART_DEFAULTS,responsive:true,maintainAspectRatio:false,
+    scales:{...CHART_DEFAULTS.scales,y:{...CHART_DEFAULTS.scales.y,min:0,max:100,ticks:{...CHART_DEFAULTS.scales.y.ticks,callback:v=>v+'%'}}},
+    plugins:{...CHART_DEFAULTS.plugins,tooltip:{...CHART_DEFAULTS.plugins.tooltip,callbacks:{label:ctx=>ctx.raw+'%'}}},
+    onClick:(e,els)=>{if(els.length)openMonthModal(s.monthKeys[els[0].index],s.monthLabels[els[0].index]);}}});
+}
+
+// ── SOURCE TABLE ──────────────────────────────────────────
+function renderSrcTable(){
+  const sources=[...new Set(PATIENTS.map(p=>p.s).filter(Boolean))];
+  let data=sources.map(src=>{
+    const pts=PATIENTS.filter(p=>{
+      if(p.s!==src)return false;
+      if(currentMonth!=='all'&&(!p.d||!p.d.startsWith(currentMonth)))return false;
+      return true;
+    });
+    return{source:src,total:pts.length,approved:pts.filter(p=>p.st==='Approved'&&p.l).length,submitted:pts.filter(p=>p.st==='Submitted To Medicare').length,scheduled:pts.filter(p=>p.st==='Scheduled').length};
+  }).filter(d=>d.total>0);
+  data.sort((a,b)=>b.total-a.total);
+  const origRank=Object.fromEntries(data.map((d,i)=>[d.source,i+1]));
+  data.sort((a,b)=>{let av=a[srcSortKey],bv=b[srcSortKey];if(typeof av==='string')return srcSortDir*av.localeCompare(bv);return srcSortDir*(av-bv);});
+  // Update sort indicators
+  document.querySelectorAll('.src-table .sortable').forEach(th=>{
+    th.classList.remove('asc','desc');
+    const k=th.getAttribute('onclick').match(/sortSrc\('(.+?)'\)/)?.[1];
+    if(k===srcSortKey)th.classList.add(srcSortDir===1?'asc':'desc');
+  });
+  // Totals
+  const totTotal=data.reduce((s,d)=>s+d.total,0);
+  const totAppr=data.reduce((s,d)=>s+d.approved,0);
+  const totSubm=data.reduce((s,d)=>s+d.submitted,0);
+  const totSched=data.reduce((s,d)=>s+d.scheduled,0);
+  const totRate=totTotal>0?Math.round(totAppr/totTotal*100):0;
+  const maxTotal=Math.max(...data.map(d=>d.total),1);
+  const rows=data.map((d,i)=>{
+    const rate=d.total>0?Math.round(d.approved/d.total*100):0;
+    const rc=rate>=50?'rate-h':rate>=25?'rate-m':'rate-l';
+    const e=d.source.replace(/'/g,"\\'");
+    const apprCell=d.approved>0?`<span class="cn g" onclick="openSourceModal('${e}','approved')">${d.approved}</span>`:`<span class="cn g" onclick="openSourceModal('${e}','approved')">0</span>`;
+    const submCell=d.submitted>0?`<span class="cn a" onclick="openSourceModal('${e}','submitted')">${d.submitted}</span>`:`<span class="zero">—</span>`;
+    const schedCell=d.scheduled>0?`<span class="cn b" onclick="openSourceModal('${e}','scheduled')">${d.scheduled}</span>`:`<span class="zero">—</span>`;
+    const volPct=Math.round(d.total/maxTotal*100);
+    return`<tr>
+      <td style="color:var(--muted);font-size:.72rem">${origRank[d.source]||i+1}</td>
+      <td style="font-weight:500">${d.source}</td>
+      <td class="r"><span class="cn w" onclick="openSourceModal('${e}','all')">${d.total}</span></td>
+      <td class="r">${apprCell}</td>
+      <td class="r">${submCell}</td>
+      <td class="r">${schedCell}</td>
+      <td class="r"><span class="rate-val ${rc}">${rate}%</span></td>
+      <td><div class="vol-bar-wrap"><div class="vol-bar-bg"><div class="vol-bar-fill" style="width:${volPct}%"></div></div></div></td>
+    </tr>`;
+  });
+  const totRateClass=totRate>=50?'rate-h':totRate>=25?'rate-m':'rate-l';
+  rows.push(`<tr class="total-row">
+    <td></td><td>TOTAL</td>
+    <td class="r">${totTotal}</td>
+    <td class="r" style="color:var(--green)">${totAppr}</td>
+    <td class="r" style="color:var(--amber)">${totSubm>0?totSubm:'—'}</td>
+    <td class="r" style="color:var(--blue)">${totSched>0?totSched:'—'}</td>
+    <td class="r"><span class="rate-val ${totRateClass}">${totRate}%</span></td>
+    <td></td>
+  </tr>`);
+  document.getElementById('srcBody').innerHTML=rows.join('');
+}
+function filterMonth(m,btn){currentMonth=m;document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderSrcTable();}
+function sortSrc(k){if(srcSortKey===k)srcSortDir*=-1;else{srcSortKey=k;srcSortDir=-1;}renderSrcTable();}
+
+// ── MODAL ─────────────────────────────────────────────────
+function sBadge(st){
+  if(!st)return'<span class="sbadge so">—</span>';
+  if(st==='Approved')return'<span class="sbadge sa">Approved</span>';
+  if(st==='Denied')return'<span class="sbadge sd">Denied</span>';
+  if(st==='Submitted To Medicare')return'<span class="sbadge ss">Submitted</span>';
+  if(st==='Scheduled')return'<span class="sbadge sc">Scheduled</span>';
+  return`<span class="sbadge so">${st}</span>`;
+}
+let modalPillFilter='all';
+
+function buildModalPills(patients){
+  const statuses=[
+    {key:'all',label:'All'},
+    {key:'Approved',label:'Approved',check:p=>p.st==='Approved'&&p.l},
+    {key:'Submitted To Medicare',label:'Submitted'},
+    {key:'Denied',label:'Denied'},
+    {key:'Scheduled',label:'Scheduled'},
+    {key:'CN Virtual Visit',label:'CN Visit'},
+    {key:'Dementia Eligible',label:'Dementia Eligible'},
+    {key:'Medicare Eligible',label:'Medicare Eligible'},
+    {key:'No Dementia',label:'No Dementia'},
+  ];
+  const counts={};
+  statuses.forEach(s=>{
+    if(s.key==='all'){counts.all=patients.length;return;}
+    counts[s.key]=patients.filter(s.check||(p=>p.st===s.key)).length;
+  });
+  const visible=statuses.filter(s=>s.key==='all'||counts[s.key]>0);
+  const el=document.getElementById('modalPills');
+  el.innerHTML=visible.map(s=>`<button class="mpill${modalPillFilter===s.key?' active':''}" onclick="setPillFilter('${s.key}')">${s.label} (${counts[s.key]||0})</button>`).join('');
+}
+
+function setPillFilter(key){
+  modalPillFilter=key;
+  buildModalPills(modalPatients);
+  renderModal();
+}
+
+function openModal(f){
+  modalPatients=PATIENTS.filter(p=>{
+    if(f==='approved')return p.st==='Approved'&&p.l;
+    if(f==='submitted')return p.st==='Submitted To Medicare';
+    if(f==='scheduled')return p.st==='Scheduled';
+    if(f==='denied')return p.st==='Denied';
+    return true;
+  });
+  const lbl={all:`All Referrals — All Time`,approved:'Approved Patients',submitted:'Submitted to Medicare',scheduled:'Scheduled',denied:'Denied Patients'};
+  document.getElementById('modalTitle').textContent=lbl[f]||'Patients';
+  document.getElementById('modalMeta').textContent=`${modalPatients.length} total patients`;
+  modalPillFilter='all';
+  clearFI();buildModalPills(modalPatients);renderModal();document.getElementById('overlay').classList.add('open');
+}
+function openMonthModal(mk,lbl){
+  modalPatients=PATIENTS.filter(p=>p.d&&p.d.startsWith(mk));
+  document.getElementById('modalTitle').textContent=`Referrals — ${lbl}`;
+  document.getElementById('modalMeta').textContent=`${modalPatients.length} patients in ${lbl}`;
+  modalPillFilter='all';
+  clearFI();buildModalPills(modalPatients);renderModal();document.getElementById('overlay').classList.add('open');
+}
+function openSourceModal(src,f){
+  const all=PATIENTS.filter(p=>p.s===src);
+  modalPatients=all.filter(p=>{
+    if(f==='approved')return p.st==='Approved'&&p.l;
+    if(f==='submitted')return p.st==='Submitted To Medicare';
+    if(f==='scheduled')return p.st==='Scheduled';
+    return true;
+  });
+  const lbl=f==='all'?'All':f.charAt(0).toUpperCase()+f.slice(1);
+  document.getElementById('modalTitle').textContent=`${src} — ${lbl}`;
+  document.getElementById('modalMeta').textContent=`${modalPatients.length} patients · ${src}`;
+  modalPillFilter='all';
+  clearFI();buildModalPills(modalPatients);renderModal();document.getElementById('overlay').classList.add('open');
+}
+function openBestMonthModal(){if(!_bestMonthKey)return;const s=computeStats();openMonthModal(_bestMonthKey,s.bestLabel);}
+function openTopSourceModal(){if(!_topSource)return;openSourceModal(_topSource,'all');}
+function clearFI(){['cf-n','cf-d','cf-s','cf-dob'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const st=document.getElementById('cf-st');if(st)st.value='';const t=document.getElementById('cf-t');if(t)t.value='';}
+function clearFilters(){clearFI();modalPillFilter='all';buildModalPills(modalPatients);applyFilters();}
+function applyFilters(){
+  const n=document.getElementById('cf-n').value.toLowerCase();
+  const d=document.getElementById('cf-d').value.toLowerCase();
+  const s=document.getElementById('cf-s').value.toLowerCase();
+  const st=document.getElementById('cf-st').value;
+  const tier=document.getElementById('cf-t').value;
+  const c=document.getElementById('cf-c').value.toLowerCase();
+  const dob=document.getElementById('cf-dob').value.toLowerCase();
+  let base=modalPatients;
+  if(modalPillFilter&&modalPillFilter!=='all'){
+    if(modalPillFilter==='Approved')base=base.filter(p=>p.st==='Approved'&&p.l);
+    else base=base.filter(p=>p.st===modalPillFilter);
+  }
+  modalFiltered=base.filter(p=>{
+    if(n&&!p.n.toLowerCase().includes(n))return false;
+    if(d&&!(p.d||'').includes(d))return false;
+    if(s&&!p.s.toLowerCase().includes(s))return false;
+    if(st&&p.st!==st)return false;
+    if(tier&&p.t!==tier)return false;
+    if(c&&!(p.c||'').toLowerCase().includes(c))return false;
+    if(dob&&!(p.dob||'').toLowerCase().includes(dob))return false;
+    return true;
+  });
+  renderModalRows();
+}
+function renderModal(){
+  let base=[...modalPatients];
+  if(modalPillFilter&&modalPillFilter!=='all'){
+    if(modalPillFilter==='Approved')base=base.filter(p=>p.st==='Approved'&&p.l);
+    else base=base.filter(p=>p.st===modalPillFilter);
+  }
+  modalFiltered=[...base];
+  modalFiltered.sort((a,b)=>{let av=a[modalSortKey]||'',bv=b[modalSortKey]||'';return modalSortDir*(av<bv?-1:av>bv?1:0);});
+  document.querySelectorAll('.mtable .sortable').forEach(th=>{
+    th.classList.remove('asc','desc');
+    const k=th.getAttribute('onclick').match(/sortModal\('(.+?)'\)/)?.[1];
+    if(k===modalSortKey)th.classList.add(modalSortDir===1?'asc':'desc');
+  });
+  renderModalRows();
+}
+function sortModal(k){if(modalSortKey===k)modalSortDir*=-1;else{modalSortKey=k;modalSortDir=1;}renderModal();}
+let expandedRow=null;
+function toggleRow(idx){expandedRow=(expandedRow===idx)?null:idx;renderModalRows();}
+function parseCallLog(notes){
+  if(!notes)return[];
+  const results=[];
+  const re1=/(\w+\s+Calls?):\s*([\d\/]+)/gi;
+  let m;
+  while((m=re1.exec(notes))!==null)results.push({label:m[1],date:m[2]});
+  const re2=/((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2,4}):\s*([\d\/]+)/gi;
+  re2.lastIndex=0;
+  while((m=re2.exec(notes))!==null)results.push({label:m[1],date:m[2]});
+  if(results.length===0){
+    const dates=notes.match(/\d{1,2}\/\d{1,2}\/\d{4}/g);
+    if(dates)dates.forEach((d,i)=>results.push({label:'Visit '+(i+1),date:d}));
+  }
+  return results;
+}
+function renderModalRows(){
+  const appr=modalFiltered.filter(p=>p.st==='Approved'&&p.l).length;
+  const subm=modalFiltered.filter(p=>p.st==='Submitted To Medicare').length;
+  const deni=modalFiltered.filter(p=>p.st==='Denied').length;
+  document.getElementById('modalCount').textContent=modalFiltered.length;
+  document.getElementById('modalTotal').textContent=modalPatients.length;
+  document.getElementById('modalStats').innerHTML=modalFiltered.length>0
+    ?`<span style="color:var(--green)">${appr} approved</span> &nbsp;&middot;&nbsp; <span style="color:var(--amber)">${subm} submitted</span> &nbsp;&middot;&nbsp; <span style="color:var(--red)">${deni} denied</span>`:'';
+  document.getElementById('modalEmpty').style.display=modalFiltered.length===0?'block':'none';
+  const rows=modalFiltered.map((p,i)=>{
+    const isOpen=expandedRow===i;
+    const arrow=`<span style="display:inline-block;transition:transform .2s;transform:rotate(${isOpen?90:0}deg);color:var(--muted);font-size:.6rem;margin-left:5px;">&#9654;</span>`;
+    const callLog=p.calls||[];
+    const callLogHTML=callLog.length>0?`<div style="margin-top:12px;"><div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);font-weight:600;margin-bottom:6px;">&#128222; CALL LOG</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${callLog.map(cl=>`<span style="font-size:.68rem;padding:3px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--border);"><strong>${cl.label}:</strong> ${cl.date}</span>`).join('')}</div></div>`:'';
+    const detail=isOpen?`<tr class="expand-row"><td colspan="9" style="padding:0 12px 10px 12px;background:var(--surface2);"><div style="padding:14px;background:var(--surface);border-radius:8px;border:1px solid var(--border);border-left:3px solid ${p.st==='Approved'?'var(--green)':p.st==='Denied'?'var(--red)':p.st==='Submitted To Medicare'?'var(--amber)':'var(--blue)'};">${p.notes?`<div style="margin-bottom:12px;"><div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--amber);font-weight:600;margin-bottom:5px;">&#128203; REMARKS</div><div style="font-size:.75rem;color:var(--text);line-height:1.5;">${p.notes}</div></div>`:''}
+${(()=>{
+  const fld=(label,val,extra)=>{const v=(val==null)?'':(typeof val==='string'?val.trim():String(val));return(v&&v!=='\u2014'&&v!=='-'&&v!=='--'&&v!=='N/A')?`<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">${label}</div><div ${extra||''}>${v}</div></div>`:''}text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">${label}</div><div ${extra||''}>${val}</div></div>`:'';
+  const fields=[
+    fld('CAREGIVER',p.cg),
+    fld('CAREGIVER PHONE',p.cgc),
+    fld('CAREGIVER EMAIL',p.cge),
+    fld('GENDER',p.gen),
+    fld('ZIP CODE',p.zip),
+    fld('MEDICARE ID',p.mid,'style="color:var(--muted)"'),
+    fld('REFERRED TO',p.rt),
+    fld('RESPITE STATUS',p.resp),
+    fld('START DATE',p.startDate),
+    fld('FOLLOW UP DATE',p.followUp),
+    fld('APPROVAL LETTER',p.l),
+    fld('HOME ASSESSMENT',p.ha),
+    fld('APPT DATE',p.appt),
+  ].filter(Boolean);
+  return fields.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;font-size:.7rem;">${fields.join('')}</div>`:'';
+})()}${callLogHTML}</div></td></tr>`:'';
     return `<tr class="patient-row${isOpen?' row-open':''}" onclick="toggleRow(${i})" style="cursor:pointer;"><td style="color:var(--muted);font-size:.7rem;">${i+1}</td><td><span style="font-weight:500;">${p.n||'&#8212;'}</span>${arrow}</td><td style="font-size:.72rem;color:var(--muted);">${p.s||'&#8212;'}</td><td>${sBadge(p.st)}</td><td style="font-size:.75rem;">${p.d||'&#8212;'}</td><td style="font-size:.75rem;">${p.dob||'&#8212;'}</td><td style="font-size:.75rem;">${p.c||'&#8212;'}</td><td>${p.t?`<span style="font-size:.65rem;padding:2px 8px;border-radius:20px;background:var(--green-dim);color:var(--green);border:1px solid rgba(63,185,80,.3);">${p.t}</span>`:'&#8212;'}</td><td style="font-size:.7rem;color:var(--muted);">${p.h||'&#8212;'}</td></tr>${detail}`;
   }).join('');
   document.getElementById('modalBody').innerHTML=rows;
