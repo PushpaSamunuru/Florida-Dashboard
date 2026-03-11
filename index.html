@@ -176,6 +176,9 @@ td{padding:9px 14px;font-size:0.8rem;border-bottom:1px solid var(--border2);colo
 .mtable th{font-size:0.62rem;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:9px 12px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border);}
 .mtable td{padding:9px 12px;font-size:0.77rem;border-bottom:1px solid var(--border2);color:var(--text);vertical-align:top;}
 .mtable tbody tr:hover td{background:rgba(255,255,255,.02);}
+.patient-row:hover td{background:rgba(255,255,255,.04) !important;}
+.patient-row.row-open td{background:rgba(255,255,255,.03);}
+.expand-row td{padding:0 !important;background:var(--surface2) !important;}
 .sbadge{display:inline-block;font-size:0.64rem;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;border:1px solid;}
 .sa{background:var(--green-dim);color:var(--green);border-color:rgba(63,185,80,.4);}
 .sd{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.4);}
@@ -186,6 +189,9 @@ td{padding:9px 14px;font-size:0.8rem;border-bottom:1px solid var(--border2);colo
 .notes-cell.has-notes{color:var(--text);}
 .mempty{padding:40px;text-align:center;color:var(--muted);font-size:.82rem;}
 .mfilter-row td{padding:5px 6px;background:var(--surface2);}
+.mpill{font-size:.72rem;padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s;}
+.mpill:hover{border-color:var(--blue);color:var(--text);}
+.mpill.active{background:var(--green-dim);border-color:var(--green);color:var(--green);font-weight:600;}
 .col-filter{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:0.7rem;font-family:'Inter',sans-serif;color:var(--text);width:100%;outline:none;transition:border-color .15s;}
 .col-filter:focus{border-color:var(--blue);}
 select.col-filter{cursor:pointer;}
@@ -362,51 +368,42 @@ select.col-filter{cursor:pointer;}
       </div>
       <button class="mclose" onclick="closeModal()">✕</button>
     </div>
+    <div class="mpills" id="modalPills" style="padding:10px 20px 8px;display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface);"></div>
+    <div class="mfilterbar" style="padding:6px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;">
+      <input class="col-filter" id="cf-n" placeholder="Search name…" oninput="applyFilters()" style="flex:2;min-width:120px;">
+      <input class="col-filter" id="cf-s" placeholder="Search source…" oninput="applyFilters()" style="flex:2;min-width:120px;">
+      <select class="col-filter" id="cf-st" onchange="applyFilters()" style="flex:1.5;min-width:120px;">
+        <option value="">All statuses</option>
+        <option>Approved</option><option>Denied</option>
+        <option>Submitted To Medicare</option><option>Scheduled</option>
+        <option>No Dementia</option><option>Dementia Eligible</option>
+        <option>Medicare Eligible</option><option>CN Virtual Visit</option>
+        <option>Care Plan Complete</option><option>Education</option>
+        <option>Bill For 99483</option><option>Home Visit</option>
+        <option>Bill for Guide</option>
+      </select>
+      <input class="col-filter" id="cf-d" placeholder="e.g. 2/2026" oninput="applyFilters()" style="flex:1;min-width:90px;">
+      <input class="col-filter" id="cf-dob" placeholder="Search DOB…" oninput="applyFilters()" style="flex:1;min-width:90px;">
+      <input class="col-filter" id="cf-c" placeholder="Search county…" oninput="applyFilters()" style="flex:1.5;min-width:100px;">
+      <select class="col-filter" id="cf-t" onchange="applyFilters()" style="flex:1;min-width:80px;">
+        <option value="">All tiers</option>
+        <option>High</option><option>Medium</option><option>Low</option>
+      </select>
+      <button class="clear-btn" onclick="clearFilters()">✕ Clear filters</button>
+    </div>
     <div class="mbody">
       <table class="mtable">
         <thead>
           <tr>
-            <th class="sortable" onclick="sortModal('n')">Name <span class="sort-icon">↕</span></th>
-            <th class="sortable" onclick="sortModal('d')">Ref. Date <span class="sort-icon">↕</span></th>
+            <th style="width:36px">#</th>
+            <th class="sortable" onclick="sortModal('n')">Patient Name <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('s')">Source <span class="sort-icon">↕</span></th>
             <th class="sortable" onclick="sortModal('st')">Status <span class="sort-icon">↕</span></th>
-            <th class="sortable" onclick="sortModal('s')">Referred By <span class="sort-icon">↕</span></th>
-            <th>Referred To</th>
-            <th class="sortable" onclick="sortModal('t')">Tier <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('d')">Referral Date <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('dob')">Date of Birth <span class="sort-icon">↕</span></th>
             <th class="sortable" onclick="sortModal('c')">County <span class="sort-icon">↕</span></th>
-            <th>HCPCS</th>
-            <th>Home Assess.</th>
-            <th>Appt Date</th>
-            <th>Follow Up</th>
-            <th>DOB</th>
-            <th>Gender</th>
-            <th>Zip</th>
-            <th>Medicare ID</th>
-            <th>Caregiver</th>
-            <th>Respite</th>
-            <th>Letter</th>
-            <th>Notes / Remarks</th>
-          </tr>
-          <tr class="mfilter-row" id="filterRow">
-            <td><input class="col-filter" id="cf-n" placeholder="Name…" oninput="applyFilters()"></td>
-            <td><input class="col-filter" id="cf-d" placeholder="Date…" oninput="applyFilters()"></td>
-            <td>
-              <select class="col-filter" id="cf-st" onchange="applyFilters()">
-                <option value="">All</option>
-                <option>Approved</option><option>Denied</option>
-                <option>Submitted To Medicare</option><option>Scheduled</option>
-                <option>No Dementia</option><option>Dementia Eligible</option>
-                <option>Medicare Eligible</option><option>CN Virtual Visit</option>
-                <option>Care Plan Complete</option><option>Education</option>
-                <option>Bill For 99483</option><option>Home Visit</option>
-                <option>Bill for Guide</option>
-              </select>
-            </td>
-            <td><input class="col-filter" id="cf-s" placeholder="Source…" oninput="applyFilters()"></td>
-            <td></td>
-            <td><input class="col-filter" id="cf-t" placeholder="Tier…" oninput="applyFilters()"></td>
-            <td><input class="col-filter" id="cf-c" placeholder="County…" oninput="applyFilters()"></td>
-            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-            <td><button class="clear-btn" onclick="clearFilters()">✕ Clear</button></td>
+            <th class="sortable" onclick="sortModal('t')">Tier <span class="sort-icon">↕</span></th>
+            <th class="sortable" onclick="sortModal('h')">HCPCS <span class="sort-icon">↕</span></th>
           </tr>
         </thead>
         <tbody id="modalBody"></tbody>
@@ -764,6 +761,36 @@ function sBadge(st){
   if(st==='Scheduled')return'<span class="sbadge sc">Scheduled</span>';
   return`<span class="sbadge so">${st}</span>`;
 }
+let modalPillFilter='all';
+
+function buildModalPills(patients){
+  const statuses=[
+    {key:'all',label:'All'},
+    {key:'Approved',label:'Approved',check:p=>p.st==='Approved'&&p.l},
+    {key:'Submitted To Medicare',label:'Submitted'},
+    {key:'Denied',label:'Denied'},
+    {key:'Scheduled',label:'Scheduled'},
+    {key:'CN Virtual Visit',label:'CN Visit'},
+    {key:'Dementia Eligible',label:'Dementia Eligible'},
+    {key:'Medicare Eligible',label:'Medicare Eligible'},
+    {key:'No Dementia',label:'No Dementia'},
+  ];
+  const counts={};
+  statuses.forEach(s=>{
+    if(s.key==='all'){counts.all=patients.length;return;}
+    counts[s.key]=patients.filter(s.check||(p=>p.st===s.key)).length;
+  });
+  const visible=statuses.filter(s=>s.key==='all'||counts[s.key]>0);
+  const el=document.getElementById('modalPills');
+  el.innerHTML=visible.map(s=>`<button class="mpill${modalPillFilter===s.key?' active':''}" onclick="setPillFilter('${s.key}')">${s.label} (${counts[s.key]||0})</button>`).join('');
+}
+
+function setPillFilter(key){
+  modalPillFilter=key;
+  buildModalPills(modalPatients);
+  renderModal();
+}
+
 function openModal(f){
   modalPatients=PATIENTS.filter(p=>{
     if(f==='approved')return p.st==='Approved'&&p.l;
@@ -772,16 +799,18 @@ function openModal(f){
     if(f==='denied')return p.st==='Denied';
     return true;
   });
-  const lbl={all:`All Patients (${PATIENTS.length})`,approved:'Approved Patients',submitted:'Submitted to Medicare',scheduled:'Scheduled',denied:'Denied Patients'};
+  const lbl={all:`All Referrals — All Time`,approved:'Approved Patients',submitted:'Submitted to Medicare',scheduled:'Scheduled',denied:'Denied Patients'};
   document.getElementById('modalTitle').textContent=lbl[f]||'Patients';
-  document.getElementById('modalMeta').textContent=`${modalPatients.length} patients · Click column headers to sort · Use filters below to search`;
-  clearFI();renderModal();document.getElementById('overlay').classList.add('open');
+  document.getElementById('modalMeta').textContent=`${modalPatients.length} total patients`;
+  modalPillFilter='all';
+  clearFI();buildModalPills(modalPatients);renderModal();document.getElementById('overlay').classList.add('open');
 }
 function openMonthModal(mk,lbl){
   modalPatients=PATIENTS.filter(p=>p.d&&p.d.startsWith(mk));
   document.getElementById('modalTitle').textContent=`Referrals — ${lbl}`;
   document.getElementById('modalMeta').textContent=`${modalPatients.length} patients in ${lbl}`;
-  clearFI();renderModal();document.getElementById('overlay').classList.add('open');
+  modalPillFilter='all';
+  clearFI();buildModalPills(modalPatients);renderModal();document.getElementById('overlay').classList.add('open');
 }
 function openSourceModal(src,f){
   const all=PATIENTS.filter(p=>p.s===src);
@@ -794,32 +823,45 @@ function openSourceModal(src,f){
   const lbl=f==='all'?'All':f.charAt(0).toUpperCase()+f.slice(1);
   document.getElementById('modalTitle').textContent=`${src} — ${lbl}`;
   document.getElementById('modalMeta').textContent=`${modalPatients.length} patients · ${src}`;
-  clearFI();renderModal();document.getElementById('overlay').classList.add('open');
+  modalPillFilter='all';
+  clearFI();buildModalPills(modalPatients);renderModal();document.getElementById('overlay').classList.add('open');
 }
 function openBestMonthModal(){if(!_bestMonthKey)return;const s=computeStats();openMonthModal(_bestMonthKey,s.bestLabel);}
 function openTopSourceModal(){if(!_topSource)return;openSourceModal(_topSource,'all');}
-function clearFI(){['cf-n','cf-d','cf-s','cf-t','cf-c'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const st=document.getElementById('cf-st');if(st)st.value='';}
-function clearFilters(){clearFI();applyFilters();}
+function clearFI(){['cf-n','cf-d','cf-s','cf-dob'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const st=document.getElementById('cf-st');if(st)st.value='';const t=document.getElementById('cf-t');if(t)t.value='';}
+function clearFilters(){clearFI();modalPillFilter='all';buildModalPills(modalPatients);applyFilters();}
 function applyFilters(){
   const n=document.getElementById('cf-n').value.toLowerCase();
   const d=document.getElementById('cf-d').value.toLowerCase();
   const s=document.getElementById('cf-s').value.toLowerCase();
   const st=document.getElementById('cf-st').value;
-  const t=document.getElementById('cf-t').value.toLowerCase();
+  const tier=document.getElementById('cf-t').value;
   const c=document.getElementById('cf-c').value.toLowerCase();
-  modalFiltered=modalPatients.filter(p=>{
+  const dob=document.getElementById('cf-dob').value.toLowerCase();
+  let base=modalPatients;
+  if(modalPillFilter&&modalPillFilter!=='all'){
+    if(modalPillFilter==='Approved')base=base.filter(p=>p.st==='Approved'&&p.l);
+    else base=base.filter(p=>p.st===modalPillFilter);
+  }
+  modalFiltered=base.filter(p=>{
     if(n&&!p.n.toLowerCase().includes(n))return false;
     if(d&&!(p.d||'').includes(d))return false;
     if(s&&!p.s.toLowerCase().includes(s))return false;
     if(st&&p.st!==st)return false;
-    if(t&&!p.t.toLowerCase().includes(t))return false;
-    if(c&&!p.c.toLowerCase().includes(c))return false;
+    if(tier&&p.t!==tier)return false;
+    if(c&&!(p.c||'').toLowerCase().includes(c))return false;
+    if(dob&&!(p.dob||'').toLowerCase().includes(dob))return false;
     return true;
   });
   renderModalRows();
 }
 function renderModal(){
-  modalFiltered=[...modalPatients];
+  let base=[...modalPatients];
+  if(modalPillFilter&&modalPillFilter!=='all'){
+    if(modalPillFilter==='Approved')base=base.filter(p=>p.st==='Approved'&&p.l);
+    else base=base.filter(p=>p.st===modalPillFilter);
+  }
+  modalFiltered=[...base];
   modalFiltered.sort((a,b)=>{let av=a[modalSortKey]||'',bv=b[modalSortKey]||'';return modalSortDir*(av<bv?-1:av>bv?1:0);});
   document.querySelectorAll('.mtable .sortable').forEach(th=>{
     th.classList.remove('asc','desc');
@@ -829,37 +871,61 @@ function renderModal(){
   renderModalRows();
 }
 function sortModal(k){if(modalSortKey===k)modalSortDir*=-1;else{modalSortKey=k;modalSortDir=1;}renderModal();}
+let expandedRow=null;
+function toggleRow(idx){expandedRow=(expandedRow===idx)?null:idx;renderModalRows();}
+function parseCallLog(notes){
+  if(!notes)return[];
+  const results=[];
+  const re1=/(\w+\s+Calls?):\s*([\d\/]+)/gi;
+  let m;
+  while((m=re1.exec(notes))!==null)results.push({label:m[1],date:m[2]});
+  const re2=/((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2,4}):\s*([\d\/]+)/gi;
+  re2.lastIndex=0;
+  while((m=re2.exec(notes))!==null)results.push({label:m[1],date:m[2]});
+  if(results.length===0){
+    const dates=notes.match(/\d{1,2}\/\d{1,2}\/\d{4}/g);
+    if(dates)dates.forEach((d,i)=>results.push({label:'Visit '+(i+1),date:d}));
+  }
+  return results;
+}
 function renderModalRows(){
   const appr=modalFiltered.filter(p=>p.st==='Approved'&&p.l).length;
+  const subm=modalFiltered.filter(p=>p.st==='Submitted To Medicare').length;
+  const deni=modalFiltered.filter(p=>p.st==='Denied').length;
   document.getElementById('modalCount').textContent=modalFiltered.length;
   document.getElementById('modalTotal').textContent=modalPatients.length;
-  document.getElementById('modalStats').innerHTML=modalFiltered.length>0?`Approved: <span>${appr}</span> &nbsp;|&nbsp; Rate: <span>${Math.round(appr/modalFiltered.length*100)}%</span>`:'';
+  document.getElementById('modalStats').innerHTML=modalFiltered.length>0
+    ?`<span style="color:var(--green)">${appr} approved</span> &nbsp;&middot;&nbsp; <span style="color:var(--amber)">${subm} submitted</span> &nbsp;&middot;&nbsp; <span style="color:var(--red)">${deni} denied</span>`:'';
   document.getElementById('modalEmpty').style.display=modalFiltered.length===0?'block':'none';
-  document.getElementById('modalBody').innerHTML=modalFiltered.map(p=>`<tr>
-    <td style="font-weight:500;white-space:nowrap">${p.n||'—'}</td>
-    <td style="white-space:nowrap">${p.d||'—'}</td>
-    <td>${sBadge(p.st)}</td>
-    <td style="white-space:nowrap">${p.s||'—'}</td>
-    <td style="font-size:.72rem;color:var(--muted)">${p.rt||'—'}</td>
-    <td>${p.t?`<span style="font-size:.68rem;padding:2px 7px;border-radius:20px;background:var(--green-dim);color:var(--green);border:1px solid rgba(63,185,80,.3)">${p.t}</span>`:'—'}</td>
-    <td>${p.c||'—'}</td>
-    <td style="font-size:.72rem;color:var(--muted)">${p.h||'—'}</td>
-    <td style="font-size:.72rem">${p.ha||'—'}</td>
-    <td style="font-size:.72rem;white-space:nowrap">${p.appt||'—'}</td>
-    <td style="font-size:.72rem;white-space:nowrap">${p.followUp||'—'}</td>
-    <td style="font-size:.72rem;white-space:nowrap">${p.dob||'—'}</td>
-    <td style="font-size:.72rem">${p.gen||'—'}</td>
-    <td style="font-size:.72rem">${p.zip||'—'}</td>
-    <td style="font-size:.72rem;color:var(--muted)">${p.mid||'—'}</td>
-    <td style="font-size:.72rem">${p.cg||'—'}${p.cgc?'<br><span style="color:var(--muted)">'+p.cgc+'</span>':''}</td>
-    <td style="font-size:.72rem;color:var(--muted)">${p.resp||'—'}</td>
-    <td style="font-size:.7rem;color:var(--muted);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.l||'—'}</td>
-    <td class="notes-cell ${p.notes?'has-notes':''}">${p.notes||'—'}</td>
-  </tr>`).join('');
+  const rows=modalFiltered.map((p,i)=>{
+    const isOpen=expandedRow===i;
+    const arrow=`<span style="display:inline-block;transition:transform .2s;transform:rotate(${isOpen?90:0}deg);color:var(--muted);font-size:.6rem;margin-left:5px;">&#9654;</span>`;
+    const callLog=parseCallLog(p.notes);
+    const callLogHTML=callLog.length>0?`<div style="margin-top:12px;"><div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);font-weight:600;margin-bottom:6px;">&#128222; CALL LOG</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${callLog.map(cl=>`<span style="font-size:.68rem;padding:3px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--border);"><strong>${cl.label}:</strong> ${cl.date}</span>`).join('')}</div></div>`:'';
+    const detail=isOpen?`<tr class="expand-row"><td colspan="9" style="padding:0 12px 10px 12px;background:var(--surface2);"><div style="padding:14px;background:var(--surface);border-radius:8px;border:1px solid var(--border);border-left:3px solid var(--green);">${p.notes?`<div style="margin-bottom:12px;"><div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--amber);font-weight:600;margin-bottom:5px;">&#128203; REMARKS</div><div style="font-size:.75rem;color:var(--text);line-height:1.5;">${p.notes}</div></div>`:''}
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;font-size:.7rem;">
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">CAREGIVER</div><div>${p.cg||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">CAREGIVER PHONE</div><div>${p.cgc||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">CAREGIVER EMAIL</div><div>${p.cge||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">GENDER</div><div>${p.gen||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">ZIP CODE</div><div>${p.zip||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">MEDICARE ID</div><div style="color:var(--muted)">${p.mid||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">RESPITE STATUS</div><div>${p.resp||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">START DATE</div><div>${p.startDate||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">FOLLOW UP DATE</div><div>${p.followUp||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">APPROVAL LETTER</div><div>${p.l||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">HOME ASSESSMENT</div><div>${p.ha||'&#8212;'}</div></div>
+<div><div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:2px;">APPT DATE</div><div>${p.appt||'&#8212;'}</div></div>
+</div>${callLogHTML}</div></td></tr>`:'';
+    return `<tr class="patient-row${isOpen?' row-open':''}" onclick="toggleRow(${i})" style="cursor:pointer;"><td style="color:var(--muted);font-size:.7rem;">${i+1}</td><td><span style="font-weight:500;">${p.n||'&#8212;'}</span>${arrow}</td><td style="font-size:.72rem;color:var(--muted);">${p.s||'&#8212;'}</td><td>${sBadge(p.st)}</td><td style="font-size:.75rem;">${p.d||'&#8212;'}</td><td style="font-size:.75rem;">${p.dob||'&#8212;'}</td><td style="font-size:.75rem;">${p.c||'&#8212;'}</td><td>${p.t?`<span style="font-size:.65rem;padding:2px 8px;border-radius:20px;background:var(--green-dim);color:var(--green);border:1px solid rgba(63,185,80,.3);">${p.t}</span>`:'&#8212;'}</td><td style="font-size:.7rem;color:var(--muted);">${p.h||'&#8212;'}</td></tr>${detail}`;
+  }).join('');
+  document.getElementById('modalBody').innerHTML=rows;
 }
-function closeModal(){document.getElementById('overlay').classList.remove('open');}
+function closeModal(){expandedRow=null;document.getElementById('overlay').classList.remove('open');}
 function closeModalOutside(e){if(e.target===document.getElementById('overlay'))closeModal();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+
 
 // ── UI HELPERS ────────────────────────────────────────────
 function showLoading(msg){document.getElementById('loadingMsg').textContent=msg||'Loading…';document.getElementById('loadingOverlay').classList.add('show');}
