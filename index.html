@@ -375,8 +375,8 @@ let srcSortKey='total', srcSortDir=-1, currentMonth='all';
 let modalPatients=[], modalFiltered=[], modalSortKey='d', modalSortDir=-1;
 let _bestMonthKey='', _topSource='';
 
-// Redirect URI — must match exactly what's registered in Azure AD
-const REDIRECT_URI = 'https://medbetterhealthorg.sharepoint.com/sites/MBH-Reporting/Shared%20Documents/florida_referrals_dashboard.html';
+// Redirect URI — dynamic so it works on GitHub, Azure, anywhere
+const REDIRECT_URI = window.location.href.split('#')[0].split('?')[0];
 
 async function boot() {
   bootReady = (async () => {
