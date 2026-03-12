@@ -588,7 +588,7 @@ function parseBuffer(buf) {
 
 function computeStats() {
   const total = PATIENTS.length;
-  const approved = PATIENTS.filter(p=>p.st==='Approved'&&p.l).length;
+  const approved = PATIENTS.filter(p=>p.st==='Approved').length;
   const submitted = PATIENTS.filter(p=>p.st==='Submitted To Medicare').length;
   const scheduled = PATIENTS.filter(p=>p.st==='Scheduled').length;
   const mm = {};
@@ -597,7 +597,7 @@ function computeStats() {
     const mk = p.d.slice(0,7);
     if (!mm[mk]) mm[mk] = {total:0,approved:0};
     mm[mk].total++;
-    if (p.st==='Approved'&&p.l) mm[mk].approved++;
+    if (p.st==='Approved') mm[mk].approved++;
   });
   const mks = Object.keys(mm).sort();
   const mlbl = mks.map(k => { const[y,m]=k.split('-'); return new Date(+y,+m-1,1).toLocaleString('default',{month:'short'})+" '"+String(y).slice(2); });
@@ -612,7 +612,7 @@ function computeStats() {
     if (!p.s) return;
     if (!sm[p.s]) sm[p.s] = {total:0,approved:0};
     sm[p.s].total++;
-    if (p.st==='Approved'&&p.l) sm[p.s].approved++;
+    if (p.st==='Approved') sm[p.s].approved++;
   });
   let topSrc='', topAppr=0;
   Object.entries(sm).forEach(([s,v]) => { if(v.approved>topAppr){topAppr=v.approved;topSrc=s;} });
@@ -683,7 +683,7 @@ function renderSrcTable() {
   const sources = [...new Set(PATIENTS.map(p=>p.s).filter(Boolean))];
   let data = sources.map(src => {
     const pts = PATIENTS.filter(p => p.s===src && (currentMonth==='all'||(p.d&&p.d.startsWith(currentMonth))));
-    return {source:src,total:pts.length,approved:pts.filter(p=>p.st==='Approved'&&p.l).length,submitted:pts.filter(p=>p.st==='Submitted To Medicare').length,scheduled:pts.filter(p=>p.st==='Scheduled').length};
+    return {source:src,total:pts.length,approved:pts.filter(p=>p.st==='Approved').length,submitted:pts.filter(p=>p.st==='Submitted To Medicare').length,scheduled:pts.filter(p=>p.st==='Scheduled').length};
   }).filter(d=>d.total>0);
 
   // Include patients with NO source so totals always match KPIs
@@ -692,7 +692,7 @@ function renderSrcTable() {
     data.push({
       source:'(No Source)',
       total: unassigned.length,
-      approved: unassigned.filter(p=>p.st==='Approved'&&p.l).length,
+      approved: unassigned.filter(p=>p.st==='Approved').length,
       submitted: unassigned.filter(p=>p.st==='Submitted To Medicare').length,
       scheduled: unassigned.filter(p=>p.st==='Scheduled').length,
       isUnassigned: true
@@ -716,7 +716,7 @@ function renderSrcTable() {
   // TOTAL row uses ALL patients to match KPI exactly
   const allFiltered = PATIENTS.filter(p => currentMonth==='all'||(p.d&&p.d.startsWith(currentMonth)));
   const tT  = allFiltered.length;
-  const tA  = allFiltered.filter(p=>p.st==='Approved'&&p.l).length;
+  const tA  = allFiltered.filter(p=>p.st==='Approved').length;
   const tS  = allFiltered.filter(p=>p.st==='Submitted To Medicare').length;
   const tSc = allFiltered.filter(p=>p.st==='Scheduled').length;
   const tR  = tT>0?Math.round(tA/tT*100):0;
@@ -840,7 +840,7 @@ let _modalFilter = 'all'; // active status pill
 
 function openModal(f) {
   modalPatients = PATIENTS.filter(p=>{
-    if(f==='approved')return p.st==='Approved'&&p.l;
+    if(f==='approved')return p.st==='Approved';
     if(f==='submitted')return p.st==='Submitted To Medicare';
     if(f==='scheduled')return p.st==='Scheduled';
     if(f==='denied')return p.st==='Denied';
@@ -880,7 +880,7 @@ function openSourceModal(src, f) {
 
   const all = PATIENTS.filter(p => srcFilter(p) && monthFilter(p));
   modalPatients = all.filter(p => {
-    if(f==='approved') return p.st==='Approved' && p.l;
+    if(f==='approved') return p.st==='Approved';
     if(f==='submitted') return p.st==='Submitted To Medicare';
     if(f==='scheduled') return p.st==='Scheduled';
     return true;
@@ -898,7 +898,7 @@ function openTotalModal(f) {
   const monthFilter = p => currentMonth === 'all' || (p.d && p.d.startsWith(currentMonth));
   const all = PATIENTS.filter(monthFilter);
   modalPatients = all.filter(p => {
-    if(f==='approved') return p.st==='Approved' && p.l;
+    if(f==='approved') return p.st==='Approved';
     if(f==='submitted') return p.st==='Submitted To Medicare';
     if(f==='scheduled') return p.st==='Scheduled';
     return true;
@@ -919,7 +919,7 @@ function buildStatusPills() {
   // Count by status group in modalPatients
   const groups = [
     {key:'all', label:'All', fn:p=>true},
-    {key:'approved', label:'Approved', fn:p=>p.st==='Approved'&&p.l},
+    {key:'approved', label:'Approved', fn:p=>p.st==='Approved'},
     {key:'submitted', label:'Submitted', fn:p=>p.st==='Submitted To Medicare'},
     {key:'denied', label:'Denied', fn:p=>p.st==='Denied'},
     {key:'scheduled', label:'Scheduled', fn:p=>p.st==='Scheduled'},
@@ -962,7 +962,7 @@ function applyFilters() {
 
   // Apply pill filter first
   const pillFns = {
-    all:p=>true, approved:p=>p.st==='Approved'&&p.l, submitted:p=>p.st==='Submitted To Medicare',
+    all:p=>true, approved:p=>p.st==='Approved', submitted:p=>p.st==='Submitted To Medicare',
     denied:p=>p.st==='Denied', scheduled:p=>p.st==='Scheduled', cnvisit:p=>p.st==='CN Virtual Visit',
     dementia:p=>p.st==='Dementia Eligible', medicare:p=>p.st==='Medicare Eligible', nodementia:p=>p.st==='No Dementia'
   };
@@ -997,7 +997,7 @@ function sortModal(k){if(modalSortKey===k)modalSortDir*=-1;else{modalSortKey=k;m
 
 function renderModalRows() {
   // Footer stats always from the full unfiltered pool
-  const totalAppr    = modalPatients.filter(p=>p.st==='Approved'&&p.l).length;
+  const totalAppr    = modalPatients.filter(p=>p.st==='Approved').length;
   const totalSubm    = modalPatients.filter(p=>p.st==='Submitted To Medicare').length;
   const totalDenied  = modalPatients.filter(p=>p.st==='Denied').length;
   const showing      = modalFiltered.length;
