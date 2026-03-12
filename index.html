@@ -209,7 +209,19 @@ select.col-filter{cursor:pointer;}
   <div class="signin-title">Florida Medicare GUIDE Dashboard</div>
   <div class="signin-sub">Sign in with your MedBetterHealth.org account, then paste the SharePoint link to load live data.</div>
   <input class="sp-input" id="spUrlInput" type="text" placeholder="Paste SharePoint share link to Guide Master List.xlsx…" oninput="saveUrl(this.value)">
-  <button class="btn-ms-big" onclick="signIn()">
+
+  <!-- Shown only when inside an iframe (e.g. SharePoint embed) -->
+  <div id="iframeWarning" style="display:none;flex-direction:column;align-items:center;gap:12px;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);border-radius:10px;padding:20px 28px;max-width:420px;text-align:center;">
+    <div style="font-size:1.3rem">🔓</div>
+    <div style="font-size:.85rem;color:var(--text);font-weight:600">Sign in required</div>
+    <div style="font-size:.78rem;color:var(--muted);line-height:1.6">This dashboard is running inside a SharePoint frame. Click below to open it in a full tab where sign-in works.</div>
+    <button class="btn-ms-big" onclick="window.open(window.location.href,'_blank')" style="gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+      Open Dashboard in New Tab
+    </button>
+  </div>
+
+  <button class="btn-ms-big" id="btnSignInBig" onclick="signIn()">
     <svg width="18" height="18" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
     Sign in with Microsoft
   </button>
@@ -375,8 +387,30 @@ async function boot() {
     });
     await msalApp.initialize();
     try { await msalApp.handleRedirectPromise(); } catch(e) {}
+
+    // 1. Check if already signed in (cached)
     const accounts = msalApp.getAllAccounts();
-    if (accounts.length > 0) { currentAccount = accounts[0]; onSignedIn(); }
+    if (accounts.length > 0) {
+      currentAccount = accounts[0];
+      onSignedIn();
+      return;
+    }
+
+    // 2. Try silent SSO — works when user is already logged into M365 in the browser
+    try {
+      const res = await msalApp.ssoSilent({ scopes: SCOPES });
+      currentAccount = res.account;
+      onSignedIn();
+      return;
+    } catch(e) {
+      // Silent SSO failed — user will need to click sign in
+    }
+
+    // 3. If inside an iframe, show "Open in new tab" button instead of broken popup
+    if (window.self !== window.top) {
+      document.getElementById('iframeWarning').style.display = 'flex';
+      document.getElementById('btnSignIn').style.display = 'none';
+    }
   })();
   await bootReady;
   const saved = getSavedUrl();
@@ -387,7 +421,7 @@ async function signIn() {
   try {
     document.getElementById('btnSignIn').disabled = true;
     if (bootReady) await bootReady;
-    const res = await msalApp.loginPopup({scopes: SCOPES, prompt: 'select_account'});
+    const res = await msalApp.loginPopup({scopes: SCOPES});
     currentAccount = res.account;
     onSignedIn();
   } catch(e) {
