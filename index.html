@@ -375,20 +375,32 @@ let srcSortKey='total', srcSortDir=-1, currentMonth='all';
 let modalPatients=[], modalFiltered=[], modalSortKey='d', modalSortDir=-1;
 let _bestMonthKey='', _topSource='';
 
+// Redirect URI — must match exactly what's registered in Azure AD
+const REDIRECT_URI = 'https://medbetterhealthorg.sharepoint.com/sites/MBH-Reporting/Shared%20Documents/florida_referrals_dashboard.html';
+
 async function boot() {
   bootReady = (async () => {
     msalApp = new msal.PublicClientApplication({
       auth: {
         clientId: CLIENT_ID,
         authority: 'https://login.microsoftonline.com/' + TENANT_ID,
-        redirectUri: window.location.href.split('#')[0].split('?')[0]
+        redirectUri: REDIRECT_URI
       },
       cache: {cacheLocation:'localStorage', storeAuthStateInCookie:true}
     });
     await msalApp.initialize();
-    try { await msalApp.handleRedirectPromise(); } catch(e) {}
 
-    // 1. Check if already signed in (cached)
+    // Handle redirect coming back after login
+    try {
+      const res = await msalApp.handleRedirectPromise();
+      if (res && res.account) {
+        currentAccount = res.account;
+        onSignedIn();
+        return;
+      }
+    } catch(e) { console.warn('redirect handle error', e); }
+
+    // Already signed in from cache
     const accounts = msalApp.getAllAccounts();
     if (accounts.length > 0) {
       currentAccount = accounts[0];
@@ -396,21 +408,17 @@ async function boot() {
       return;
     }
 
-    // 2. Try silent SSO — works when user is already logged into M365 in the browser
+    // Try silent SSO first
     try {
       const res = await msalApp.ssoSilent({ scopes: SCOPES });
       currentAccount = res.account;
       onSignedIn();
       return;
-    } catch(e) {
-      // Silent SSO failed — user will need to click sign in
-    }
+    } catch(e) {}
 
-    // 3. If inside an iframe, show "Open in new tab" button instead of broken popup
-    if (window.self !== window.top) {
-      document.getElementById('iframeWarning').style.display = 'flex';
-      document.getElementById('btnSignIn').style.display = 'none';
-    }
+    // Nothing worked — show sign-in screen, button uses redirect (works everywhere)
+    document.getElementById('btnSignIn').style.display = '';
+    document.getElementById('btnSignInBig').style.display = '';
   })();
   await bootReady;
   const saved = getSavedUrl();
@@ -419,19 +427,19 @@ async function boot() {
 
 async function signIn() {
   try {
-    document.getElementById('btnSignIn').disabled = true;
     if (bootReady) await bootReady;
-    const res = await msalApp.loginPopup({scopes: SCOPES});
-    currentAccount = res.account;
-    onSignedIn();
+    document.getElementById('btnSignIn').disabled = true;
+    // Use redirect — works in iframes, SharePoint previews, everywhere
+    await msalApp.loginRedirect({ scopes: SCOPES });
+    // Page will reload after redirect — boot() handles the response above
   } catch(e) {
     document.getElementById('btnSignIn').disabled = false;
-    if (!e.message.includes('user_cancelled')) setStatus('Sign-in failed: ' + e.message, 'err');
+    setStatus('Sign-in failed: ' + e.message, 'err');
   }
 }
 
 function signOut() {
-  msalApp.logoutPopup({account: currentAccount});
+  msalApp.logoutRedirect({account: currentAccount});
   currentAccount = null;
   ['userPill','btnRefresh','lastRefresh'].forEach(id => {
     const el = document.getElementById(id);
@@ -733,7 +741,16 @@ function renderSrcTable() {
     </tr>`;
   });
   const trc=tR>=50?'rate-h':tR>=25?'rate-m':'rate-l';
-  rows.push(`<tr class="total-row"><td></td><td>TOTAL</td><td class="r">${tT}</td><td class="r" style="color:var(--green)">${tA}</td><td class="r" style="color:var(--amber)">${tS>0?tS:'—'}</td><td class="r" style="color:var(--blue)">${tSc>0?tSc:'—'}</td><td class="r"><span class="rate-val ${trc}">${tR}%</span></td><td></td></tr>`);
+  rows.push(`<tr class="total-row">
+    <td></td>
+    <td>TOTAL</td>
+    <td class="r"><span class="cn w" onclick="openTotalModal('all')" style="cursor:pointer">${tT}</span></td>
+    <td class="r"><span class="cn g" onclick="openTotalModal('approved')" style="cursor:pointer;color:var(--green)">${tA}</span></td>
+    <td class="r"><span style="cursor:pointer;color:var(--amber)" onclick="openTotalModal('submitted')">${tS>0?tS:'—'}</span></td>
+    <td class="r"><span style="cursor:pointer;color:var(--blue)" onclick="openTotalModal('scheduled')">${tSc>0?tSc:'—'}</span></td>
+    <td class="r"><span class="rate-val ${trc}">${tR}%</span></td>
+    <td></td>
+  </tr>`);
   document.getElementById('srcBody').innerHTML = rows.join('');
 }
 function filterMonth(m,btn){currentMonth=m;document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderSrcTable();}
@@ -846,17 +863,50 @@ function openMonthModal(mk,lbl) {
   document.getElementById('overlay').classList.add('open');
 }
 
-function openSourceModal(src,f) {
-  const all = PATIENTS.filter(p=>p.s===src);
-  modalPatients = all.filter(p=>{
-    if(f==='approved')return p.st==='Approved'&&p.l;
-    if(f==='submitted')return p.st==='Submitted To Medicare';
-    if(f==='scheduled')return p.st==='Scheduled';
+// Helper: extract effective HCPCS code (after slash if present)
+function effectiveHcpcs(raw) {
+  if(!raw) return '—';
+  const s = String(raw).trim();
+  if(s.includes('/')) return s.split('/').pop().trim();
+  return s || '—';
+}
+
+function openSourceModal(src, f) {
+  // Filter by source AND current month
+  const srcFilter = src === '(No Source)'
+    ? p => !p.s
+    : p => p.s === src;
+  const monthFilter = p => currentMonth === 'all' || (p.d && p.d.startsWith(currentMonth));
+
+  const all = PATIENTS.filter(p => srcFilter(p) && monthFilter(p));
+  modalPatients = all.filter(p => {
+    if(f==='approved') return p.st==='Approved' && p.l;
+    if(f==='submitted') return p.st==='Submitted To Medicare';
+    if(f==='scheduled') return p.st==='Scheduled';
     return true;
   });
-  const lbl=f==='all'?'All':f.charAt(0).toUpperCase()+f.slice(1);
+  const lbl = f==='all' ? 'All' : f.charAt(0).toUpperCase()+f.slice(1);
+  const monthLbl = currentMonth==='all' ? '' : ` · ${currentMonth}`;
   document.getElementById('modalTitle').textContent = `${src} — ${lbl}`;
-  document.getElementById('modalMeta').textContent = `${modalPatients.length} patients · ${src}`;
+  document.getElementById('modalMeta').textContent = `${modalPatients.length} patients · ${src}${monthLbl}`;
+  _openRow=-1; _modalFilter='all';
+  clearFI(); buildStatusPills(); renderModal();
+  document.getElementById('overlay').classList.add('open');
+}
+
+function openTotalModal(f) {
+  const monthFilter = p => currentMonth === 'all' || (p.d && p.d.startsWith(currentMonth));
+  const all = PATIENTS.filter(monthFilter);
+  modalPatients = all.filter(p => {
+    if(f==='approved') return p.st==='Approved' && p.l;
+    if(f==='submitted') return p.st==='Submitted To Medicare';
+    if(f==='scheduled') return p.st==='Scheduled';
+    return true;
+  });
+  const lbl = f==='all' ? 'All' : f.charAt(0).toUpperCase()+f.slice(1);
+  const monthLbl = currentMonth==='all' ? 'All Time' : currentMonth;
+  document.getElementById('modalTitle').textContent = `All Sources — ${lbl}`;
+  document.getElementById('modalMeta').textContent = `${modalPatients.length} patients · ${monthLbl}`;
   _openRow=-1; _modalFilter='all';
   clearFI(); buildStatusPills(); renderModal();
   document.getElementById('overlay').classList.add('open');
@@ -978,7 +1028,7 @@ function renderModalRows() {
       <td style="font-size:.75rem">${p.dob||'—'}</td>
       <td style="font-size:.75rem">${p.c||'—'}</td>
       <td>${tierBadge}</td>
-      <td style="font-size:.7rem;color:var(--muted)">${p.h||'—'}</td>
+      <td style="font-size:.7rem;color:var(--muted)">${effectiveHcpcs(p.h)}</td>
     </tr>`);
     if(isOpen) rows.push(buildDetailHTML(p));
   });
