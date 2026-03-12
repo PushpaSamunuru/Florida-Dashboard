@@ -326,10 +326,7 @@ select.col-filter{cursor:pointer;}
                 <option>1</option><option>2</option><option>3</option>
               </select>
             </td>
-            <td></td>
-          </tr>
-        </thead>
-        <tbody id="modalBody"></tbody>
+            <td><input class="col-filter" id="cf-h" placeholder="e.g. G0521" oninput="applyFilters()" style="width:100%"></td>
       </table>
       <div id="modalEmpty" class="mempty" style="display:none">No patients match the current filters.</div>
     </div>
@@ -945,7 +942,7 @@ function setPillFilter(key) {
 }
 
 function clearFI(){
-  ['cf-n','cf-s','cf-d','cf-dob','cf-c'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['cf-n','cf-s','cf-d','cf-dob','cf-c','cf-h'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['cf-st','cf-t'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
 function clearFilters(){clearFI();_modalFilter='all';buildStatusPills();applyFilters();}
@@ -958,6 +955,7 @@ function applyFilters() {
   const dob=(document.getElementById('cf-dob')||{}).value?.toLowerCase()||'';
   const c=(document.getElementById('cf-c')||{}).value?.toLowerCase()||'';
   const t=(document.getElementById('cf-t')||{}).value?.toLowerCase()||'';
+  const h=(document.getElementById('cf-h')||{}).value?.toLowerCase()||'';
 
   // Apply pill filter first
   const pillFns = {
@@ -976,6 +974,7 @@ function applyFilters() {
     if(dob&&!(p.dob||'').toLowerCase().includes(dob))return false;
     if(c&&!p.c.toLowerCase().includes(c))return false;
     if(t&&!p.t.toLowerCase().includes(t))return false;
+    if(h&&!String(p.h||'').toLowerCase().includes(h))return false;
     return true;
   });
   renderModalRows();
